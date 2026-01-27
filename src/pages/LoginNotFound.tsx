@@ -6,6 +6,7 @@ const LoginNotFound = () => {
     const email = location.state?.email || '';
 
     const handleCreateAccount = () => {
+        localStorage.setItem('pendingEmail', email);
         localStorage.removeItem('token');
         window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/strava?prompt=consent`;
     };
