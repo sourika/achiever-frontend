@@ -163,7 +163,7 @@ const ChallengeDetail = () => {
                         </button>
                     </div>
 
-                    {progress?.participantProgress.map((p) => (
+                    {(progress?.participantProgress ?? []).map((p) => (
                         <div key={p.userId} className="mb-4 last:mb-0">
                             <div className="flex justify-between mb-1">
                                 <span className="font-medium">{p.username}</span>
