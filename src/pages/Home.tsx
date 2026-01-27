@@ -1,56 +1,87 @@
-import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../api/client';
 
 const Home = () => {
-    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    // Check if already logged in
     const token = localStorage.getItem('token');
-    const error = searchParams.get('error');
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-    const handleSignIn = () => {
-        window.location.href = apiUrl + '/api/auth/strava';
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        window.location.reload();
-    };
-
     if (token) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-                    <h1 className="text-3xl font-bold mb-2">Achiever</h1>
-                    <p className="text-gray-600 mb-8">Fitness challenges with friends</p>
-                    <div className="space-y-3">
-                        <a href="/dashboard" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg inline-block w-full">
-                            Go to Dashboard
-                        </a>
-                        <button onClick={handleLogout} className="text-gray-500 hover:text-gray-700 text-sm">
-                            Logout / Switch Account
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+        navigate('/dashboard');
+        return null;
     }
 
+    const handleContinue = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email.trim()) {
+            setError('Please enter your email');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const response = await api.get(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+            const { exists, hasPassword } = response.data;
+
+            if (exists && hasPassword) {
+                // User exists with password → go to password page
+                navigate('/login/password', { state: { email } });
+            } else if (exists && !hasPassword) {
+                // User exists but no password → needs to set password via Strava
+                navigate('/login/set-password', { state: { email } });
+            } else {
+                // User doesn't exist → show not found page
+                navigate('/login/not-found', { state: { email } });
+            }
+        } catch {
+            setError('Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-                <h1 className="text-3xl font-bold mb-2">Achiever</h1>
-                <p className="text-gray-600 mb-8">Fitness challenges with friends</p>
-                {error && (
-                    <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                        Authorization cancelled. Please try again.
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+            <div className="max-w-md w-full">
+                <div className="bg-white rounded-lg shadow-md p-8">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-orange-500 mb-2">Achiever</h1>
+                        <p className="text-gray-600">Fitness challenges with friends</p>
                     </div>
-                )}
-                <div className="space-y-4">
-                    <a href="/get-started" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg w-full font-semibold block">
-                        Get Started
-                    </a>
-                    <button onClick={handleSignIn} className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg w-full">
-                        Sign In
-                    </button>
+
+                    <h2 className="text-xl font-semibold text-center mb-6">
+                        Enter your email to sign in
+                    </h2>
+
+                    <form onSubmit={handleContinue} className="space-y-4">
+                        <div>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="name@example.com"
+                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                        </div>
+
+                        {error && (
+                            <p className="text-red-500 text-sm">{error}</p>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg disabled:opacity-50"
+                        >
+                            {loading ? 'Checking...' : 'Continue'}
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

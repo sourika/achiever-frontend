@@ -1,19 +1,21 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
-import GetStarted from './pages/GetStarted';
+import LoginPassword from './pages/LoginPassword';
+import LoginNotFound from './pages/LoginNotFound';
+import LoginSetPassword from './pages/LoginSetPassword';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
-import Privacy from './pages/Privacy';
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/get-started" element={<GetStarted />} />
+                <Route path="/login/password" element={<LoginPassword />} />
+                <Route path="/login/not-found" element={<LoginNotFound />} />
+                <Route path="/login/set-password" element={<LoginSetPassword />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/privacy" element={<Privacy />} />
             </Routes>
         </BrowserRouter>
     );
