@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { api } from '../api/client';
 
 const AuthCallback = () => {
     const [searchParams] = useSearchParams();
@@ -10,14 +11,25 @@ const AuthCallback = () => {
         const error = searchParams.get('error');
 
         if (error) {
-            // Пользователь нажал Cancel или произошла ошибка
             navigate('/?error=' + error);
             return;
         }
 
         if (token) {
             localStorage.setItem('token', token);
-            navigate('/dashboard');
+
+            // Check if user has password
+            api.get('/api/auth/me')
+                .then(res => {
+                    if (res.data.hasPassword) {
+                        navigate('/dashboard');
+                    } else {
+                        navigate('/set-password');
+                    }
+                })
+                .catch(() => {
+                    navigate('/dashboard');
+                });
         } else {
             navigate('/');
         }
