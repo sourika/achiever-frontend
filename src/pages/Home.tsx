@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 
@@ -9,11 +9,12 @@ const Home = () => {
     const [error, setError] = useState('');
 
     // Check if already logged in
-    const token = localStorage.getItem('token');
-    if (token) {
-        navigate('/dashboard');
-        return null;
-    }
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            navigate('/dashboard');
+        }
+    }, [navigate]);
 
     const handleContinue = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,13 +31,10 @@ const Home = () => {
             const { exists, hasPassword } = response.data;
 
             if (exists && hasPassword) {
-                // User exists with password → go to password page
                 navigate('/login/password', { state: { email } });
             } else if (exists && !hasPassword) {
-                // User exists but no password → needs to set password via Strava
                 navigate('/login/set-password', { state: { email } });
             } else {
-                // User doesn't exist → show not found page
                 navigate('/login/not-found', { state: { email } });
             }
         } catch {

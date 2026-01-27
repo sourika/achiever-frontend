@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../api/client';
 
@@ -11,10 +11,11 @@ const LoginPassword = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    if (!email) {
-        navigate('/');
-        return null;
-    }
+    useEffect(() => {
+        if (!email) {
+            navigate('/');
+        }
+    }, [email, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,12 +27,14 @@ const LoginPassword = () => {
             localStorage.setItem('token', response.data.token);
             navigate('/dashboard');
         } catch (err: unknown) {
-            const error = err as { response?: { data?: { error?: string } } };
-            setError(error.response?.data?.error || 'Invalid password');
+            const axiosError = err as { response?: { data?: { error?: string } } };
+            setError(axiosError.response?.data?.error || 'Invalid password');
         } finally {
             setLoading(false);
         }
     };
+
+    if (!email) return null;
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
