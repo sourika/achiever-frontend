@@ -167,16 +167,28 @@ const Dashboard = () => {
                                                 )}
                                             </div>
 
-                                            {/* Row 3: Dates */}
-                                            <p className="text-gray-500 text-sm mt-1">
-                                                {c.startAt} → {c.endAt}
-                                            </p>
+                                            {/* Row 3: Dates + Delete */}
+                                            <div className="flex items-center justify-between mt-1">
+                                                <p className="text-gray-500 text-sm">
+                                                    {c.startAt} → {c.endAt}
+                                                </p>
+                                                {isCreator(c) && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setDeleteId(c.id);
+                                                        }}
+                                                        className="px-2 py-1 rounded text-xs bg-red-100 text-red-800 hover:bg-red-200"
+                                                    >
+                                                        DELETE
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
 
-                                        {/* Right side: Status + Delete */}
-                                        <div className="flex flex-col items-end gap-2">
+                                        {/* Status badge - top right */}
                                         <span
-                                            className={`px-2 py-1 rounded text-xs ${
+                                            className={`px-2 py-1 rounded text-xs ml-4 ${
                                                 c.status === 'ACTIVE'
                                                     ? 'bg-green-100 text-green-800'
                                                     : c.status === 'PENDING'
@@ -184,20 +196,8 @@ const Dashboard = () => {
                                                         : 'bg-gray-100 text-gray-800'
                                             }`}
                                         >
-                                            {c.status}
-                                        </span>
-                                            {isCreator(c) && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDeleteId(c.id);
-                                                    }}
-                                                    className="px-2 py-1 rounded text-xs bg-red-100 text-red-800 hover:bg-red-200"
-                                                >
-                                                    DELETE
-                                                </button>
-                                            )}
-                                        </div>
+                                        {c.status}
+                                    </span>
                                     </div>
                                 </div>
                             ))}
