@@ -307,9 +307,11 @@ const ChallengeDetail = () => {
                                         ? 'bg-green-100 text-green-800'
                                         : challenge.status === 'PENDING'
                                             ? 'bg-yellow-100 text-yellow-800'
-                                            : challenge.status === 'COMPLETED'
-                                                ? 'bg-blue-100 text-blue-800'
-                                                : 'bg-gray-100 text-gray-800'
+                                            : challenge.status === 'SCHEDULED'
+                                                ? 'bg-purple-100 text-purple-800'
+                                                : challenge.status === 'COMPLETED'
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                 }`}
                             >
                                 {challenge.status}
@@ -326,8 +328,7 @@ const ChallengeDetail = () => {
                             {!isCreator && !currentUserForfeited && challenge.status !== 'COMPLETED' && (
                                 <button
                                     onClick={() => setShowLeaveConfirm(true)}
-                                    className="text-red-500 hover:text-red-700 text-sm"
-                                    title="Leave challenge"
+                                    className="text-gray-500 hover:text-gray-700 text-sm"
                                 >
                                     🚪 Leave
                                 </button>

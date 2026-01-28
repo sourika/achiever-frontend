@@ -11,6 +11,7 @@ interface Participant {
 
 interface Challenge {
     id: string;
+    name?: string;
     sportTypes: SportType[];
     startAt: string;
     endAt: string;
@@ -32,6 +33,13 @@ const SPORTS: SportConfig[] = [
     { type: 'SWIM', label: 'Swimming', emoji: '🏊', unit: 'km' },
     { type: 'WALK', label: 'Walking', emoji: '🚶', unit: 'km' },
 ];
+
+// Consistent sort order for sports
+const SPORT_ORDER: SportType[] = ['RUN', 'RIDE', 'SWIM', 'WALK'];
+
+const sortSports = (sports: SportType[]): SportType[] => {
+    return [...sports].sort((a, b) => SPORT_ORDER.indexOf(a) - SPORT_ORDER.indexOf(b));
+};
 
 const JoinChallenge = () => {
     const { code } = useParams();
@@ -75,7 +83,6 @@ const JoinChallenge = () => {
 
         void loadChallenge();
     }, [code]);
-
 
     const handleJoin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -131,12 +138,7 @@ const JoinChallenge = () => {
         );
     }
 
-    const sportEmojis: Record<string, string> = {
-        RUN: '🏃',
-        RIDE: '🚴',
-        SWIM: '🏊',
-        WALK: '🚶',
-    };
+    const sortedSports = challenge ? sortSports(challenge.sportTypes) : [];
 
     const getSportLabel = (sport: SportType) => {
         const config = SPORTS.find(s => s.type === sport);
@@ -153,10 +155,15 @@ const JoinChallenge = () => {
 
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">
-                            {challenge?.sportTypes.map(sport => sportEmojis[sport]).join(' ')}
+                        <span className="text-xl flex gap-1">
+                            {sortedSports.map((sport, idx) => {
+                                const config = SPORTS.find(s => s.type === sport);
+                                return <span key={idx}>{config?.emoji}</span>;
+                            })}
                         </span>
-                        <span className="font-medium">Multi-Sport Challenge</span>
+                        <span className="font-medium">
+                            {challenge?.name || 'Challenge'}
+                        </span>
                     </div>
                     <p className="text-gray-600 text-sm">
                         {challenge?.startAt} → {challenge?.endAt}
@@ -169,7 +176,7 @@ const JoinChallenge = () => {
                             Set Your Goals
                         </label>
                         <div className="space-y-3">
-                            {challenge?.sportTypes.map((sport) => {
+                            {sortedSports.map((sport) => {
                                 const config = SPORTS.find(s => s.type === sport);
                                 return (
                                     <div
