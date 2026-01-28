@@ -147,14 +147,14 @@ const Dashboard = () => {
                                         >
                                             {/* Row 1: Sport icons + Challenge name */}
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xl flex gap-1">
-                                                    {c.sportTypes.map((sport, idx) => (
-                                                        <span key={idx}>{sportEmojis[sport] || ''}</span>
-                                                    ))}
-                                                </span>
+                                            <span className="text-xl flex gap-1">
+                                                {c.sportTypes.map((sport, idx) => (
+                                                    <span key={idx}>{sportEmojis[sport] || ''}</span>
+                                                ))}
+                                            </span>
                                                 <span className="font-semibold">
-                                                    {c.name || 'Challenge'}
-                                                </span>
+                                                {c.name || 'Challenge'}
+                                            </span>
                                             </div>
 
                                             {/* Row 2: Participants */}
@@ -162,8 +162,8 @@ const Dashboard = () => {
                                                 <span>{getParticipantsDisplay(c)}</span>
                                                 {c.participants.length < 2 && (
                                                     <span className="text-xs text-gray-400">
-                                                        (waiting for opponent)
-                                                    </span>
+                                                    (waiting for opponent)
+                                                </span>
                                                 )}
                                             </div>
 
@@ -175,26 +175,26 @@ const Dashboard = () => {
 
                                         {/* Right side: Status + Delete */}
                                         <div className="flex flex-col items-end gap-2">
-                                            <span
-                                                className={`px-2 py-1 rounded text-xs ${
-                                                    c.status === 'ACTIVE'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : c.status === 'PENDING'
-                                                            ? 'bg-yellow-100 text-yellow-800'
-                                                            : 'bg-gray-100 text-gray-800'
-                                                }`}
-                                            >
-                                                {c.status}
-                                            </span>
+                                        <span
+                                            className={`px-2 py-1 rounded text-xs ${
+                                                c.status === 'ACTIVE'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : c.status === 'PENDING'
+                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                            }`}
+                                        >
+                                            {c.status}
+                                        </span>
                                             {isCreator(c) && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setDeleteId(c.id);
                                                     }}
-                                                    className="text-red-500 hover:text-red-700 text-xs"
+                                                    className="px-2 py-1 rounded text-xs bg-red-100 text-red-800 hover:bg-red-200"
                                                 >
-                                                    🗑️ Delete
+                                                    DELETE
                                                 </button>
                                             )}
                                         </div>
