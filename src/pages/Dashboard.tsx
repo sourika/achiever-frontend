@@ -16,6 +16,7 @@ interface Participant {
 
 interface Challenge {
     id: string;
+    name?: string;
     sportTypes: string[];
     startAt: string;
     endAt: string;
@@ -29,6 +30,8 @@ const Dashboard = () => {
     const [user, setUser] = useState<User | null>(null);
     const [challenges, setChallenges] = useState<Challenge[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         Promise.all([
@@ -51,6 +54,19 @@ const Dashboard = () => {
         window.location.href = '/';
     };
 
+    const handleDelete = async (id: string) => {
+        setDeleting(true);
+        try {
+            await api.delete(`/api/challenges/${id}`);
+            setChallenges(challenges.filter(c => c.id !== id));
+            setDeleteId(null);
+        } catch (err) {
+            console.error('Failed to delete challenge', err);
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -69,17 +85,21 @@ const Dashboard = () => {
     // Get display text for participants
     const getParticipantsDisplay = (challenge: Challenge) => {
         if (!user) return '';
-        
+
         const currentUserParticipant = challenge.participants.find(p => p.userId === user.id);
         const opponent = challenge.participants.find(p => p.userId !== user.id);
-        
+
         if (currentUserParticipant && opponent) {
             return `${currentUserParticipant.username} vs ${opponent.username}`;
         } else if (currentUserParticipant) {
             return currentUserParticipant.username;
         }
-        
+
         return challenge.participants.map(p => p.username).join(' vs ');
+    };
+
+    const isCreator = (challenge: Challenge) => {
+        return user && challenge.createdBy.id === user.id;
     };
 
     return (
@@ -118,47 +138,100 @@ const Dashboard = () => {
                             {challenges.map((c) => (
                                 <div
                                     key={c.id}
-                                    onClick={() => navigate(`/challenges/${c.id}`)}
-                                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
                                 >
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex items-center gap-2">
-                                            {/* Sport icons */}
-                                            <span className="text-xl">
-                                                {c.sportTypes.map(sport => sportEmojis[sport] || '').join('')}
-                                            </span>
-                                            {/* Participant names */}
-                                            <span className="font-medium">
-                                                {getParticipantsDisplay(c)}
-                                            </span>
-                                            {/* Waiting indicator if no opponent yet */}
-                                            {c.participants.length < 2 && (
-                                                <span className="text-xs text-gray-400">
-                                                    (waiting for opponent)
+                                    <div className="flex justify-between items-start">
+                                        <div
+                                            className="flex-1 cursor-pointer"
+                                            onClick={() => navigate(`/challenges/${c.id}`)}
+                                        >
+                                            {/* Row 1: Sport icons + Challenge name */}
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xl flex gap-1">
+                                                    {c.sportTypes.map((sport, idx) => (
+                                                        <span key={idx}>{sportEmojis[sport] || ''}</span>
+                                                    ))}
                                                 </span>
+                                                <span className="font-semibold">
+                                                    {c.name || 'Challenge'}
+                                                </span>
+                                            </div>
+
+                                            {/* Row 2: Participants */}
+                                            <div className="flex items-center gap-2 text-gray-600">
+                                                <span>{getParticipantsDisplay(c)}</span>
+                                                {c.participants.length < 2 && (
+                                                    <span className="text-xs text-gray-400">
+                                                        (waiting for opponent)
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Row 3: Dates */}
+                                            <p className="text-gray-500 text-sm mt-1">
+                                                {c.startAt} → {c.endAt}
+                                            </p>
+                                        </div>
+
+                                        {/* Right side: Status + Delete */}
+                                        <div className="flex flex-col items-end gap-2">
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs ${
+                                                    c.status === 'ACTIVE'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : c.status === 'PENDING'
+                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                            : 'bg-gray-100 text-gray-800'
+                                                }`}
+                                            >
+                                                {c.status}
+                                            </span>
+                                            {isCreator(c) && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDeleteId(c.id);
+                                                    }}
+                                                    className="text-red-500 hover:text-red-700 text-xs"
+                                                >
+                                                    🗑️ Delete
+                                                </button>
                                             )}
                                         </div>
-                                        <span
-                                            className={`px-2 py-1 rounded text-xs ${
-                                                c.status === 'ACTIVE'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : c.status === 'PENDING'
-                                                        ? 'bg-yellow-100 text-yellow-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                            }`}
-                                        >
-                                            {c.status}
-                                        </span>
                                     </div>
-                                    <p className="text-gray-500 text-sm mt-1">
-                                        {c.startAt} → {c.endAt}
-                                    </p>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteId && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-bold mb-2">Delete Challenge?</h3>
+                        <p className="text-gray-600 mb-4">
+                            This action cannot be undone. All progress data will be lost.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteId(null)}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleDelete(deleteId)}
+                                disabled={deleting}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
+                            >
+                                {deleting ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
