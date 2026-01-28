@@ -25,16 +25,16 @@ interface SportConfig {
     label: string;
     emoji: string;
     unit: string;
+    defaultGoal: number;
 }
 
 const SPORTS: SportConfig[] = [
-    { type: 'RUN', label: 'Running', emoji: '🏃', unit: 'km' },
-    { type: 'RIDE', label: 'Cycling', emoji: '🚴', unit: 'km' },
-    { type: 'SWIM', label: 'Swimming', emoji: '🏊', unit: 'km' },
-    { type: 'WALK', label: 'Walking', emoji: '🚶', unit: 'km' },
+    { type: 'RUN', label: 'Running', emoji: '🏃', unit: 'km', defaultGoal: 50 },
+    { type: 'RIDE', label: 'Cycling', emoji: '🚴', unit: 'km', defaultGoal: 100 },
+    { type: 'SWIM', label: 'Swimming', emoji: '🏊', unit: 'km', defaultGoal: 5 },
+    { type: 'WALK', label: 'Walking', emoji: '🚶', unit: 'km', defaultGoal: 30 },
 ];
 
-// Consistent sort order for sports
 const SPORT_ORDER: SportType[] = ['RUN', 'RIDE', 'SWIM', 'WALK'];
 
 const sortSports = (sports: SportType[]): SportType[] => {
@@ -45,6 +45,7 @@ const JoinChallenge = () => {
     const { code } = useParams();
     const navigate = useNavigate();
     const [challenge, setChallenge] = useState<Challenge | null>(null);
+    const [selectedSports, setSelectedSports] = useState<Set<SportType>>(new Set());
     const [goals, setGoals] = useState<Record<SportType, number>>({
         RUN: 50,
         RIDE: 100,
@@ -61,7 +62,10 @@ const JoinChallenge = () => {
                 const res = await api.get(`/api/challenges/invite/${code}`);
                 setChallenge(res.data);
 
-                // Set initial goals based on creator's goals (as suggestion)
+                // Pre-select creator's sports and set their goals as defaults
+                const creatorSports = new Set<SportType>(res.data.sportTypes);
+                setSelectedSports(creatorSports);
+
                 if (res.data.participants.length > 0) {
                     const creatorGoals = res.data.participants[0].goals;
                     if (creatorGoals) {
@@ -84,8 +88,24 @@ const JoinChallenge = () => {
         void loadChallenge();
     }, [code]);
 
+    const toggleSport = (sportType: SportType) => {
+        const newSelected = new Set(selectedSports);
+        if (newSelected.has(sportType)) {
+            newSelected.delete(sportType);
+        } else {
+            newSelected.add(sportType);
+        }
+        setSelectedSports(newSelected);
+    };
+
     const handleJoin = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (selectedSports.size === 0) {
+            setError('Please select at least one sport');
+            return;
+        }
+
         setJoining(true);
         setError('');
 
@@ -96,9 +116,9 @@ const JoinChallenge = () => {
             return;
         }
 
-        // Build goals object with only challenge sports
+        // Build goals object with only selected sports
         const goalsToSend: Record<string, number> = {};
-        challenge?.sportTypes.forEach((sport) => {
+        selectedSports.forEach((sport) => {
             goalsToSend[sport] = goals[sport];
         });
 
@@ -138,12 +158,7 @@ const JoinChallenge = () => {
         );
     }
 
-    const sortedSports = challenge ? sortSports(challenge.sportTypes) : [];
-
-    const getSportLabel = (sport: SportType) => {
-        const config = SPORTS.find(s => s.type === sport);
-        return config ? `${config.emoji} ${config.label}` : sport;
-    };
+    const sortedCreatorSports = challenge ? sortSports(challenge.sportTypes) : [];
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -156,7 +171,7 @@ const JoinChallenge = () => {
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <div className="flex items-center gap-2 mb-2">
                         <span className="text-xl flex gap-1">
-                            {sortedSports.map((sport, idx) => {
+                            {sortedCreatorSports.map((sport, idx) => {
                                 const config = SPORTS.find(s => s.type === sport);
                                 return <span key={idx}>{config?.emoji}</span>;
                             })}
@@ -168,32 +183,61 @@ const JoinChallenge = () => {
                     <p className="text-gray-600 text-sm">
                         {challenge?.startAt} → {challenge?.endAt}
                     </p>
+                    <p className="text-gray-500 text-xs mt-2">
+                        Creator's sports: {sortedCreatorSports.map(s => SPORTS.find(sp => sp.type === s)?.label).join(', ')}
+                    </p>
                 </div>
 
                 <form onSubmit={handleJoin} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
-                            Set Your Goals
+                            Select Your Sports & Goals
                         </label>
                         <div className="space-y-3">
-                            {sortedSports.map((sport) => {
-                                const config = SPORTS.find(s => s.type === sport);
+                            {SPORTS.map((sport) => {
+                                const isSelected = selectedSports.has(sport.type);
+                                const isCreatorSport = challenge?.sportTypes.includes(sport.type);
                                 return (
                                     <div
-                                        key={sport}
-                                        className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+                                        key={sport.type}
+                                        className={`border rounded-lg p-3 ${
+                                            isSelected
+                                                ? 'border-orange-500 bg-orange-50'
+                                                : 'border-gray-200'
+                                        }`}
                                     >
-                                        <span>{getSportLabel(sport)}</span>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                value={goals[sport]}
-                                                onChange={(e) => setGoals({ ...goals, [sport]: Number(e.target.value) })}
-                                                min="1"
-                                                className="w-20 border border-gray-300 rounded-lg px-2 py-1 text-center"
-                                            />
-                                            <span className="text-gray-600 text-sm">{config?.unit}</span>
+                                        <div className="flex items-center justify-between">
+                                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleSport(sport.type)}
+                                                    className="w-5 h-5 rounded text-orange-500"
+                                                />
+                                                <span className="text-lg">{sport.emoji}</span>
+                                                <span>{sport.label}</span>
+                                                {isCreatorSport && (
+                                                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
+                                                        Creator's pick
+                                                    </span>
+                                                )}
+                                            </label>
                                         </div>
+                                        {isSelected && (
+                                            <div className="mt-2 flex items-center gap-2 ml-7">
+                                                <input
+                                                    type="number"
+                                                    value={goals[sport.type] || ''}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value, 10);
+                                                        setGoals({ ...goals, [sport.type]: isNaN(val) ? 0 : val });
+                                                    }}
+                                                    min="1"
+                                                    className="w-20 border border-gray-300 rounded-lg px-2 py-1 text-center"
+                                                />
+                                                <span className="text-gray-600 text-sm">{sport.unit}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -204,7 +248,7 @@ const JoinChallenge = () => {
 
                     <button
                         type="submit"
-                        disabled={joining}
+                        disabled={joining || selectedSports.size === 0}
                         className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg disabled:opacity-50"
                     >
                         {joining ? 'Joining...' : 'Join Challenge'}

@@ -14,6 +14,7 @@ interface User {
 interface Participant {
     userId: string;
     username: string;
+    goals?: Record<SportType, number>;
 }
 
 interface Challenge {
@@ -158,7 +159,11 @@ const Dashboard = () => {
                     ) : (
                         <div className="space-y-3">
                             {challenges.map((c) => {
-                                const sortedSports = sortSports(c.sportTypes);
+                                const currentParticipant = c.participants.find(p => p.userId === user?.id);
+                                const mySports = currentParticipant?.goals
+                                    ? sortSports(Object.keys(currentParticipant.goals) as SportType[])
+                                    : sortSports(c.sportTypes);
+
                                 return (
                                     <div
                                         key={c.id}
@@ -172,7 +177,7 @@ const Dashboard = () => {
                                                 {/* Row 1: Sport icons + Challenge name */}
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="text-xl flex gap-1">
-                                                        {sortedSports.map((sport, idx) => (
+                                                        {mySports.map((sport, idx) => (
                                                             <span key={idx}>{sportEmojis[sport] || ''}</span>
                                                         ))}
                                                     </span>
