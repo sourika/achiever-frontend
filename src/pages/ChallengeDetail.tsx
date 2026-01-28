@@ -319,18 +319,17 @@ const ChallengeDetail = () => {
                             {isCreator && (
                                 <button
                                     onClick={() => setShowDeleteConfirm(true)}
-                                    className="text-red-500 hover:text-red-700 text-sm"
-                                    title="Delete challenge"
+                                    className="text-red-500 hover:text-red-700 text-lg"
                                 >
-                                    🗑️ Delete
+                                    <span className="text-xl">🗑️</span> Delete
                                 </button>
                             )}
                             {!isCreator && !currentUserForfeited && challenge.status !== 'COMPLETED' && (
                                 <button
                                     onClick={() => setShowLeaveConfirm(true)}
-                                    className="text-red-500 hover:text-red-700"
+                                    className="text-red-500 hover:text-red-700 text-lg"
                                 >
-                                    <span className="text-lg">🚪</span> Leave
+                                    <span className="text-xl">🚪</span> Leave
                                 </button>
                             )}
                         </div>

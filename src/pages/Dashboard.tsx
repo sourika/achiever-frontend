@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 
+type SportType = 'RUN' | 'RIDE' | 'SWIM' | 'WALK';
+
 interface User {
     id: string;
     username: string;
@@ -17,13 +19,19 @@ interface Participant {
 interface Challenge {
     id: string;
     name?: string;
-    sportTypes: string[];
+    sportTypes: SportType[];
     startAt: string;
     endAt: string;
     status: string;
     participants: Participant[];
     createdBy: { id: string; username: string };
 }
+
+const SPORT_ORDER: SportType[] = ['RUN', 'RIDE', 'SWIM', 'WALK'];
+
+const sortSports = (sports: SportType[]): SportType[] => {
+    return [...sports].sort((a, b) => SPORT_ORDER.indexOf(a) - SPORT_ORDER.indexOf(b));
+};
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -32,6 +40,8 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [leaveId, setLeaveId] = useState<string | null>(null);
+    const [leaving, setLeaving] = useState(false);
 
     useEffect(() => {
         Promise.all([
@@ -67,6 +77,19 @@ const Dashboard = () => {
         }
     };
 
+    const handleLeave = async (id: string) => {
+        setLeaving(true);
+        try {
+            await api.post(`/api/challenges/${id}/leave`);
+            setChallenges(challenges.filter(c => c.id !== id));
+            setLeaveId(null);
+        } catch (err) {
+            console.error('Failed to leave challenge', err);
+        } finally {
+            setLeaving(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -82,7 +105,6 @@ const Dashboard = () => {
         WALK: '🚶',
     };
 
-    // Get display text for participants
     const getParticipantsDisplay = (challenge: Challenge) => {
         if (!user) return '';
 
@@ -135,77 +157,89 @@ const Dashboard = () => {
                         <p className="text-gray-500">No challenges yet. Create one!</p>
                     ) : (
                         <div className="space-y-3">
-                            {challenges.map((c) => (
-                                <div
-                                    key={c.id}
-                                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div
-                                            className="flex-1 cursor-pointer"
-                                            onClick={() => navigate(`/challenges/${c.id}`)}
-                                        >
-                                            {/* Row 1: Sport icons + Challenge name */}
-                                            <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-xl flex gap-1">
-                                                {c.sportTypes.map((sport, idx) => (
-                                                    <span key={idx}>{sportEmojis[sport] || ''}</span>
-                                                ))}
-                                            </span>
-                                                <span className="font-semibold">
-                                                {c.name || 'Challenge'}
-                                            </span>
+                            {challenges.map((c) => {
+                                const sortedSports = sortSports(c.sportTypes);
+                                return (
+                                    <div
+                                        key={c.id}
+                                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div
+                                                className="flex-1 cursor-pointer"
+                                                onClick={() => navigate(`/challenges/${c.id}`)}
+                                            >
+                                                {/* Row 1: Sport icons + Challenge name */}
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-xl flex gap-1">
+                                                        {sortedSports.map((sport, idx) => (
+                                                            <span key={idx}>{sportEmojis[sport] || ''}</span>
+                                                        ))}
+                                                    </span>
+                                                    <span className="font-semibold">
+                                                        {c.name || 'Challenge'}
+                                                    </span>
+                                                </div>
+
+                                                {/* Row 2: Participants */}
+                                                <div className="flex items-center gap-2 text-gray-600">
+                                                    <span>{getParticipantsDisplay(c)}</span>
+                                                    {c.participants.length < 2 && (
+                                                        <span className="text-xs text-gray-400">
+                                                            (waiting for opponent)
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Row 3: Dates */}
+                                                <p className="text-gray-500 text-sm mt-1">
+                                                    {c.startAt} → {c.endAt}
+                                                </p>
                                             </div>
 
-                                            {/* Row 2: Participants */}
-                                            <div className="flex items-center gap-2 text-gray-600">
-                                                <span>{getParticipantsDisplay(c)}</span>
-                                                {c.participants.length < 2 && (
-                                                    <span className="text-xs text-gray-400">
-                                                    (waiting for opponent)
+                                            {/* Right column: Status + Delete/Leave */}
+                                            <div className="flex flex-col items-end gap-2 ml-4">
+                                                <span
+                                                    className={`px-2 py-1 rounded text-xs w-24 text-center ${
+                                                        c.status === 'ACTIVE'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : c.status === 'PENDING'
+                                                                ? 'bg-yellow-100 text-yellow-800'
+                                                                : c.status === 'SCHEDULED'
+                                                                    ? 'bg-purple-100 text-purple-800'
+                                                                    : c.status === 'COMPLETED'
+                                                                        ? 'bg-blue-100 text-blue-800'
+                                                                        : 'bg-gray-100 text-gray-800'
+                                                    }`}
+                                                >
+                                                    {c.status}
                                                 </span>
+                                                {isCreator(c) ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setDeleteId(c.id);
+                                                        }}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        🗑️ Delete
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setLeaveId(c.id);
+                                                        }}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        🚪 Leave
+                                                    </button>
                                                 )}
                                             </div>
-
-                                            {/* Row 3: Dates */}
-                                            <p className="text-gray-500 text-sm mt-1">
-                                                {c.startAt} → {c.endAt}
-                                            </p>
-                                        </div>
-
-                                        {/* Right column: Status + Delete */}
-                                        <div className="flex flex-col items-end gap-2 ml-4">
-                                        <span
-                                            className={`px-2 py-1 rounded text-xs w-20 text-center ${
-                                                c.status === 'ACTIVE'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : c.status === 'PENDING'
-                                                        ? 'bg-yellow-100 text-yellow-800'
-                                                        : c.status === 'SCHEDULED'
-                                                            ? 'bg-purple-100 text-purple-800'
-                                                            : c.status === 'COMPLETED'
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : 'bg-gray-100 text-gray-800'
-                                            }`}
-                                        >
-                                            {c.status}
-                                        </span>
-
-                                            {isCreator(c) && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDeleteId(c.id);
-                                                    }}
-                                                    className="px-2 py-1 rounded text-xs w-20 text-center bg-red-100 text-red-800 hover:bg-red-200"
-                                                >
-                                                    DELETE
-                                                </button>
-                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -232,6 +266,33 @@ const Dashboard = () => {
                                 className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
                             >
                                 {deleting ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Leave Confirmation Modal */}
+            {leaveId && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-bold mb-2">Leave Challenge?</h3>
+                        <p className="text-gray-600 mb-4">
+                            If you leave, you will forfeit this challenge. This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setLeaveId(null)}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleLeave(leaveId)}
+                                disabled={leaving}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
+                            >
+                                {leaving ? 'Leaving...' : 'Leave & Forfeit'}
                             </button>
                         </div>
                     </div>
