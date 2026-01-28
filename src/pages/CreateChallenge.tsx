@@ -33,6 +33,7 @@ const CreateChallenge = () => {
     );
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     const toggleSport = (sport: SportType) => {
         const newSelected = new Set(selectedSports);
@@ -42,6 +43,10 @@ const CreateChallenge = () => {
             newSelected.add(sport);
         }
         setSelectedSports(newSelected);
+        // Clear sports error when user selects
+        if (fieldErrors.sports) {
+            setFieldErrors(prev => ({ ...prev, sports: '' }));
+        }
     };
 
     const updateGoal = (sport: SportType, value: number) => {
@@ -50,14 +55,17 @@ const CreateChallenge = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
+        // Clear previous errors
+        setFieldErrors({});
+        setError('');
+
         if (selectedSports.size === 0) {
-            setError('Please select at least one sport');
+            setFieldErrors({ sports: 'Please select at least one sport' });
             return;
         }
 
         setLoading(true);
-        setError('');
 
         // Build goals object with only selected sports
         const goalsToSend: Record<string, number> = {};
@@ -73,8 +81,21 @@ const CreateChallenge = () => {
             });
             navigate(`/challenges/${response.data.id}`);
         } catch (err: unknown) {
-            const axiosError = err as { response?: { data?: { message?: string } } };
-            setError(axiosError.response?.data?.message || 'Failed to create challenge');
+            const axiosError = err as {
+                response?: {
+                    data?: {
+                        message?: string;
+                        errors?: Record<string, string>;
+                    }
+                }
+            };
+
+            // Handle field-specific errors from backend
+            if (axiosError.response?.data?.errors) {
+                setFieldErrors(axiosError.response.data.errors);
+            } else {
+                setError(axiosError.response?.data?.message || 'Failed to create challenge');
+            }
         } finally {
             setLoading(false);
         }
@@ -106,7 +127,9 @@ const CreateChallenge = () => {
                                         className={`border rounded-lg p-4 transition-all ${
                                             selectedSports.has(sport.type)
                                                 ? 'border-orange-500 bg-orange-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                                : fieldErrors.sports
+                                                    ? 'border-red-500 bg-red-50'
+                                                    : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                     >
                                         <div className="flex items-center justify-between">
@@ -122,7 +145,7 @@ const CreateChallenge = () => {
                                                 </span>
                                             </label>
                                         </div>
-                                        
+
                                         {selectedSports.has(sport.type) && (
                                             <div className="mt-3 flex items-center gap-2">
                                                 <input
@@ -138,6 +161,9 @@ const CreateChallenge = () => {
                                     </div>
                                 ))}
                             </div>
+                            {fieldErrors.sports && (
+                                <p className="text-red-500 text-sm mt-2">{fieldErrors.sports}</p>
+                            )}
                         </div>
 
                         {/* Date Selection */}
@@ -149,9 +175,21 @@ const CreateChallenge = () => {
                                 <input
                                     type="date"
                                     value={startAt}
-                                    onChange={(e) => setStartAt(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-3"
+                                    onChange={(e) => {
+                                        setStartAt(e.target.value);
+                                        if (fieldErrors.startAt) {
+                                            setFieldErrors(prev => ({ ...prev, startAt: '' }));
+                                        }
+                                    }}
+                                    className={`w-full border rounded-lg px-4 py-3 ${
+                                        fieldErrors.startAt
+                                            ? 'border-red-500 bg-red-50'
+                                            : 'border-gray-300'
+                                    }`}
                                 />
+                                {fieldErrors.startAt && (
+                                    <p className="text-red-500 text-sm mt-1">{fieldErrors.startAt}</p>
+                                )}
                             </div>
 
                             <div>
@@ -161,9 +199,21 @@ const CreateChallenge = () => {
                                 <input
                                     type="date"
                                     value={endAt}
-                                    onChange={(e) => setEndAt(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-3"
+                                    onChange={(e) => {
+                                        setEndAt(e.target.value);
+                                        if (fieldErrors.endAt) {
+                                            setFieldErrors(prev => ({ ...prev, endAt: '' }));
+                                        }
+                                    }}
+                                    className={`w-full border rounded-lg px-4 py-3 ${
+                                        fieldErrors.endAt
+                                            ? 'border-red-500 bg-red-50'
+                                            : 'border-gray-300'
+                                    }`}
                                 />
+                                {fieldErrors.endAt && (
+                                    <p className="text-red-500 text-sm mt-1">{fieldErrors.endAt}</p>
+                                )}
                             </div>
                         </div>
 
