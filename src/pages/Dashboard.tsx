@@ -9,13 +9,19 @@ interface User {
     stravaConnected: boolean;
 }
 
+interface Participant {
+    userId: string;
+    username: string;
+}
+
 interface Challenge {
     id: string;
-    sportType: string;
+    sportTypes: string[];
     startAt: string;
     endAt: string;
     status: string;
-    participants: { username: string }[];
+    participants: Participant[];
+    createdBy: { id: string; username: string };
 }
 
 const Dashboard = () => {
@@ -53,11 +59,27 @@ const Dashboard = () => {
         );
     }
 
-    const sportLabels: Record<string, string> = {
+    const sportEmojis: Record<string, string> = {
         RUN: '🏃',
         RIDE: '🚴',
         SWIM: '🏊',
         WALK: '🚶',
+    };
+
+    // Get display text for participants
+    const getParticipantsDisplay = (challenge: Challenge) => {
+        if (!user) return '';
+        
+        const currentUserParticipant = challenge.participants.find(p => p.userId === user.id);
+        const opponent = challenge.participants.find(p => p.userId !== user.id);
+        
+        if (currentUserParticipant && opponent) {
+            return `${currentUserParticipant.username} vs ${opponent.username}`;
+        } else if (currentUserParticipant) {
+            return currentUserParticipant.username;
+        }
+        
+        return challenge.participants.map(p => p.username).join(' vs ');
     };
 
     return (
@@ -100,11 +122,21 @@ const Dashboard = () => {
                                     className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
                                 >
                                     <div className="flex justify-between items-center">
-                                        <div>
-                                            <span className="text-xl mr-2">{sportLabels[c.sportType]}</span>
+                                        <div className="flex items-center gap-2">
+                                            {/* Sport icons */}
+                                            <span className="text-xl">
+                                                {c.sportTypes.map(sport => sportEmojis[sport] || '').join('')}
+                                            </span>
+                                            {/* Participant names */}
                                             <span className="font-medium">
-                        {c.participants.map((p) => p.username).join(' vs ')}
-                      </span>
+                                                {getParticipantsDisplay(c)}
+                                            </span>
+                                            {/* Waiting indicator if no opponent yet */}
+                                            {c.participants.length < 2 && (
+                                                <span className="text-xs text-gray-400">
+                                                    (waiting for opponent)
+                                                </span>
+                                            )}
                                         </div>
                                         <span
                                             className={`px-2 py-1 rounded text-xs ${
@@ -115,8 +147,8 @@ const Dashboard = () => {
                                                         : 'bg-gray-100 text-gray-800'
                                             }`}
                                         >
-                      {c.status}
-                    </span>
+                                            {c.status}
+                                        </span>
                                     </div>
                                     <p className="text-gray-500 text-sm mt-1">
                                         {c.startAt} → {c.endAt}

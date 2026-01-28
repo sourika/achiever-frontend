@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 
+type SportType = 'RUN' | 'RIDE' | 'SWIM' | 'WALK';
+
 interface Participant {
     userId: string;
     username: string;
-    goalValue: number;
+    goals: Record<SportType, number>;
 }
 
 interface Challenge {
     id: string;
     inviteCode: string;
-    sportType: string;
+    sportTypes: SportType[];
     startAt: string;
     endAt: string;
     status: string;
@@ -21,15 +23,17 @@ interface Challenge {
 interface ParticipantProgress {
     userId: string;
     username: string;
-    goalValue: number;
-    currentValue: number;
-    progressPercent: number;
+    goals: Record<SportType, number>;
+    currentDistances: Record<SportType, number>;
+    sportProgressPercents: Record<SportType, number>;
+    overallProgressPercent: number;
 }
 
 interface Progress {
     challengeId: string;
     status: string;
-    participantProgress: ParticipantProgress[];
+    sportTypes: SportType[];
+    participants: ParticipantProgress[];
 }
 
 const ChallengeDetail = () => {
@@ -88,12 +92,15 @@ const ChallengeDetail = () => {
 
     if (!challenge) return null;
 
-    const sportLabels: Record<string, string> = {
-        RUN: '🏃 Running',
-        RIDE: '🚴 Cycling',
-        SWIM: '🏊 Swimming',
-        WALK: '🚶 Walking',
+    const sportConfig: Record<SportType, { emoji: string; label: string }> = {
+        RUN: { emoji: '🏃', label: 'Running' },
+        RIDE: { emoji: '🚴', label: 'Cycling' },
+        SWIM: { emoji: '🏊', label: 'Swimming' },
+        WALK: { emoji: '🚶', label: 'Walking' },
     };
+
+    // Get sport emojis for display
+    const sportEmojis = challenge.sportTypes.map(s => sportConfig[s]?.emoji || '').join(' ');
 
     return (
         <div className="min-h-screen bg-gray-100 p-8">
@@ -108,12 +115,23 @@ const ChallengeDetail = () => {
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            <h1 className="text-2xl font-bold">
-                                {sportLabels[challenge.sportType] || challenge.sportType}
+                            <h1 className="text-2xl font-bold flex items-center gap-2">
+                                <span>{sportEmojis}</span>
+                                <span>Multi-Sport Challenge</span>
                             </h1>
                             <p className="text-gray-600">
                                 {challenge.startAt} → {challenge.endAt}
                             </p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {challenge.sportTypes.map(sport => (
+                                    <span 
+                                        key={sport}
+                                        className="bg-gray-100 px-2 py-1 rounded text-sm"
+                                    >
+                                        {sportConfig[sport]?.emoji} {sportConfig[sport]?.label}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                         <span
                             className={`px-3 py-1 rounded-full text-sm ${
@@ -124,8 +142,8 @@ const ChallengeDetail = () => {
                                         : 'bg-gray-100 text-gray-800'
                             }`}
                         >
-              {challenge.status}
-            </span>
+                            {challenge.status}
+                        </span>
                     </div>
 
                     {challenge.participants.length < 2 && (
@@ -163,27 +181,55 @@ const ChallengeDetail = () => {
                         </button>
                     </div>
 
-                    {(progress?.participantProgress ?? []).map((p) => (
-                        <div key={p.userId} className="mb-4 last:mb-0">
-                            <div className="flex justify-between mb-1">
-                                <span className="font-medium">{p.username}</span>
-                                <span className="text-gray-600">
-                  {(p.currentValue / 1000).toFixed(1)} / {(p.goalValue / 1000).toFixed(1)} km
-                </span>
+                    {(progress?.participants ?? []).map((p) => (
+                        <div key={p.userId} className="mb-6 last:mb-0 border-b border-gray-100 pb-6 last:border-0">
+                            <div className="flex justify-between items-center mb-3">
+                                <span className="font-bold text-lg">{p.username}</span>
+                                <span className="text-lg font-medium text-orange-600">
+                                    {p.overallProgressPercent}% overall
+                                </span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-4">
+                            
+                            {/* Overall progress bar */}
+                            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
                                 <div
-                                    className="bg-orange-500 h-4 rounded-full transition-all"
-                                    style={{ width: `${Math.min(p.progressPercent, 100)}%` }}
+                                    className="bg-orange-500 h-3 rounded-full transition-all"
+                                    style={{ width: `${Math.min(p.overallProgressPercent, 100)}%` }}
                                 />
                             </div>
-                            <p className="text-right text-sm text-gray-500 mt-1">
-                                {p.progressPercent}%
-                            </p>
+
+                            {/* Per-sport progress */}
+                            <div className="space-y-2">
+                                {challenge.sportTypes.map((sport) => {
+                                    const goalKm = p.goals?.[sport] || 0;
+                                    const distanceMeters = p.currentDistances?.[sport] || 0;
+                                    const percent = p.sportProgressPercents?.[sport] || 0;
+                                    const config = sportConfig[sport];
+
+                                    return (
+                                        <div key={sport} className="bg-gray-50 rounded-lg p-3">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span>
+                                                    {config?.emoji} {config?.label}
+                                                </span>
+                                                <span className="text-gray-600">
+                                                    {(distanceMeters / 1000).toFixed(1)} / {goalKm} km ({percent}%)
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div
+                                                    className="bg-blue-400 h-2 rounded-full transition-all"
+                                                    style={{ width: `${Math.min(percent, 100)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     ))}
 
-                    {(!progress?.participantProgress || progress.participantProgress.length === 0) && (
+                    {(!progress?.participants || progress.participants.length === 0) && (
                         <p className="text-gray-500">No progress yet.</p>
                     )}
                 </div>

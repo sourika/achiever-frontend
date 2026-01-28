@@ -2,21 +2,47 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 
+type SportType = 'RUN' | 'RIDE' | 'SWIM' | 'WALK';
+
+interface Participant {
+    username: string;
+    goals: Record<SportType, number>;
+}
+
 interface Challenge {
     id: string;
-    sportType: string;
+    sportTypes: SportType[];
     startAt: string;
     endAt: string;
     status: string;
     createdBy: { username: string };
-    participants: { username: string; goalValue: number }[];
+    participants: Participant[];
 }
+
+interface SportConfig {
+    type: SportType;
+    label: string;
+    emoji: string;
+    unit: string;
+}
+
+const SPORTS: SportConfig[] = [
+    { type: 'RUN', label: 'Running', emoji: '🏃', unit: 'km' },
+    { type: 'RIDE', label: 'Cycling', emoji: '🚴', unit: 'km' },
+    { type: 'SWIM', label: 'Swimming', emoji: '🏊', unit: 'km' },
+    { type: 'WALK', label: 'Walking', emoji: '🚶', unit: 'km' },
+];
 
 const JoinChallenge = () => {
     const { code } = useParams();
     const navigate = useNavigate();
     const [challenge, setChallenge] = useState<Challenge | null>(null);
-    const [goalValue, setGoalValue] = useState(10000);
+    const [goals, setGoals] = useState<Record<SportType, number>>({
+        RUN: 50,
+        RIDE: 100,
+        SWIM: 5,
+        WALK: 30,
+    });
     const [loading, setLoading] = useState(true);
     const [joining, setJoining] = useState(false);
     const [error, setError] = useState('');
@@ -26,8 +52,19 @@ const JoinChallenge = () => {
             try {
                 const res = await api.get(`/api/challenges/invite/${code}`);
                 setChallenge(res.data);
+
+                // Set initial goals based on creator's goals (as suggestion)
                 if (res.data.participants.length > 0) {
-                    setGoalValue(res.data.participants[0].goalValue);
+                    const creatorGoals = res.data.participants[0].goals;
+                    if (creatorGoals) {
+                        setGoals(prev => {
+                            const newGoals = { ...prev };
+                            Object.keys(creatorGoals).forEach((sport) => {
+                                newGoals[sport as SportType] = creatorGoals[sport];
+                            });
+                            return newGoals;
+                        });
+                    }
                 }
             } catch {
                 setError('Invalid or expired invite link');
@@ -52,8 +89,14 @@ const JoinChallenge = () => {
             return;
         }
 
+        // Build goals object with only challenge sports
+        const goalsToSend: Record<string, number> = {};
+        challenge?.sportTypes.forEach((sport) => {
+            goalsToSend[sport] = goals[sport];
+        });
+
         try {
-            const res = await api.post(`/api/challenges/invite/${code}/join`, { goalValue });
+            const res = await api.post(`/api/challenges/invite/${code}/join`, { goals: goalsToSend });
             navigate(`/challenges/${res.data.id}`);
         } catch (err: unknown) {
             const axiosError = err as { response?: { data?: { message?: string } } };
@@ -88,11 +131,16 @@ const JoinChallenge = () => {
         );
     }
 
-    const sportLabels: Record<string, string> = {
-        RUN: '🏃 Running',
-        RIDE: '🚴 Cycling',
-        SWIM: '🏊 Swimming',
-        WALK: '🚶 Walking',
+    const sportEmojis: Record<string, string> = {
+        RUN: '🏃',
+        RIDE: '🚴',
+        SWIM: '🏊',
+        WALK: '🚶',
+    };
+
+    const getSportLabel = (sport: SportType) => {
+        const config = SPORTS.find(s => s.type === sport);
+        return config ? `${config.emoji} ${config.label}` : sport;
     };
 
     return (
@@ -104,7 +152,12 @@ const JoinChallenge = () => {
                 </p>
 
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                    <p className="font-medium">{sportLabels[challenge?.sportType || '']}</p>
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">
+                            {challenge?.sportTypes.map(sport => sportEmojis[sport]).join(' ')}
+                        </span>
+                        <span className="font-medium">Multi-Sport Challenge</span>
+                    </div>
                     <p className="text-gray-600 text-sm">
                         {challenge?.startAt} → {challenge?.endAt}
                     </p>
@@ -112,16 +165,32 @@ const JoinChallenge = () => {
 
                 <form onSubmit={handleJoin} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Your Goal (km)
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                            Set Your Goals
                         </label>
-                        <input
-                            type="number"
-                            value={goalValue / 1000}
-                            onChange={(e) => setGoalValue(Number(e.target.value) * 1000)}
-                            min="1"
-                            className="w-full border border-gray-300 rounded-lg px-4 py-3"
-                        />
+                        <div className="space-y-3">
+                            {challenge?.sportTypes.map((sport) => {
+                                const config = SPORTS.find(s => s.type === sport);
+                                return (
+                                    <div
+                                        key={sport}
+                                        className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+                                    >
+                                        <span>{getSportLabel(sport)}</span>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                value={goals[sport]}
+                                                onChange={(e) => setGoals({ ...goals, [sport]: Number(e.target.value) })}
+                                                min="1"
+                                                className="w-20 border border-gray-300 rounded-lg px-2 py-1 text-center"
+                                            />
+                                            <span className="text-gray-600 text-sm">{config?.unit}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {error && <p className="text-red-500 text-sm">{error}</p>}
