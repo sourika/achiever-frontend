@@ -165,8 +165,11 @@ const CreateChallenge = () => {
                                             <div className="mt-3 flex items-center gap-2">
                                                 <input
                                                     type="number"
-                                                    value={goals[sport.type]}
-                                                    onChange={(e) => updateGoal(sport.type, Number(e.target.value))}
+                                                    value={goals[sport.type] || ''}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value, 10);
+                                                        updateGoal(sport.type, isNaN(val) ? 0 : val);
+                                                    }}
                                                     min="1"
                                                     className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-center"
                                                 />

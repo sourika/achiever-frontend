@@ -328,9 +328,9 @@ const ChallengeDetail = () => {
                             {!isCreator && !currentUserForfeited && challenge.status !== 'COMPLETED' && (
                                 <button
                                     onClick={() => setShowLeaveConfirm(true)}
-                                    className="text-gray-500 hover:text-gray-700 text-sm"
+                                    className="text-red-500 hover:text-red-700"
                                 >
-                                    🚪 Leave
+                                    <span className="text-lg">🚪</span> Leave
                                 </button>
                             )}
                         </div>
