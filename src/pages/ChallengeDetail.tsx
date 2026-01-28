@@ -18,6 +18,7 @@ interface Challenge {
     startAt: string;
     endAt: string;
     status: string;
+    createdBy: { id: string; username: string };
     participants: Participant[];
 }
 
@@ -37,24 +38,42 @@ interface Progress {
     participants: ParticipantProgress[];
 }
 
+interface User {
+    id: string;
+    username: string;
+}
+
 const ChallengeDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [challenge, setChallenge] = useState<Challenge | null>(null);
     const [progress, setProgress] = useState<Progress | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [copied, setCopied] = useState(false);
 
+    // Edit name state
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    // Delete state
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
     useEffect(() => {
         const loadChallenge = async () => {
             try {
-                const [challengeRes, progressRes] = await Promise.all([
+                const [challengeRes, progressRes, userRes] = await Promise.all([
                     api.get(`/api/challenges/${id}`),
                     api.get(`/api/challenges/${id}/progress`),
+                    api.get('/api/auth/me'),
                 ]);
                 setChallenge(challengeRes.data);
                 setProgress(progressRes.data);
+                setUser(userRes.data);
+                setEditName(challengeRes.data.name || '');
             } catch {
                 navigate('/dashboard');
             } finally {
@@ -64,7 +83,6 @@ const ChallengeDetail = () => {
 
         void loadChallenge();
     }, [id, navigate]);
-
 
     const handleSync = async () => {
         setSyncing(true);
@@ -82,6 +100,33 @@ const ChallengeDetail = () => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
+
+    const handleSaveName = async () => {
+        setSaving(true);
+        try {
+            const res = await api.patch(`/api/challenges/${id}`, { name: editName || null });
+            setChallenge(res.data);
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Failed to update name', err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        setDeleting(true);
+        try {
+            await api.delete(`/api/challenges/${id}`);
+            navigate('/dashboard');
+        } catch (err) {
+            console.error('Failed to delete challenge', err);
+            setDeleting(false);
+            setShowDeleteConfirm(false);
+        }
+    };
+
+    const isCreator = user && challenge && user.id === challenge.createdBy.id;
 
     if (loading) {
         return (
@@ -112,16 +157,58 @@ const ChallengeDetail = () => {
 
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <h1 className="text-2xl font-bold flex items-center gap-2">
-                                <span>{challenge.name || 'Challenge'}</span>
-                            </h1>
+                        <div className="flex-1">
+                            {/* Editable name */}
+                            {isEditing ? (
+                                <div className="flex items-center gap-2 mb-2">
+                                    <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value.slice(0, 50))}
+                                        placeholder="Challenge name"
+                                        maxLength={50}
+                                        className="text-2xl font-bold border border-gray-300 rounded px-2 py-1 flex-1"
+                                        autoFocus
+                                    />
+                                    <button
+                                        onClick={handleSaveName}
+                                        disabled={saving}
+                                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
+                                    >
+                                        {saving ? '...' : '✓'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsEditing(false);
+                                            setEditName(challenge.name || '');
+                                        }}
+                                        className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded text-sm"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 mb-2">
+                                    <h1 className="text-2xl font-bold">
+                                        {challenge.name || 'Challenge'}
+                                    </h1>
+                                    {isCreator && (
+                                        <button
+                                            onClick={() => setIsEditing(true)}
+                                            className="text-gray-400 hover:text-gray-600 text-sm"
+                                            title="Edit name"
+                                        >
+                                            ✏️
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                             <p className="text-gray-600">
                                 {challenge.startAt} → {challenge.endAt}
                             </p>
                             <div className="flex flex-wrap gap-2 mt-2">
                                 {challenge.sportTypes.map(sport => (
-                                    <span 
+                                    <span
                                         key={sport}
                                         className="bg-gray-100 px-2 py-1 rounded text-sm"
                                     >
@@ -130,17 +217,28 @@ const ChallengeDetail = () => {
                                 ))}
                             </div>
                         </div>
-                        <span
-                            className={`px-3 py-1 rounded-full text-sm ${
-                                challenge.status === 'ACTIVE'
-                                    ? 'bg-green-100 text-green-800'
-                                    : challenge.status === 'PENDING'
-                                        ? 'bg-yellow-100 text-yellow-800'
-                                        : 'bg-gray-100 text-gray-800'
-                            }`}
-                        >
-                            {challenge.status}
-                        </span>
+                        <div className="flex flex-col items-end gap-2">
+                            <span
+                                className={`px-3 py-1 rounded-full text-sm ${
+                                    challenge.status === 'ACTIVE'
+                                        ? 'bg-green-100 text-green-800'
+                                        : challenge.status === 'PENDING'
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : 'bg-gray-100 text-gray-800'
+                                }`}
+                            >
+                                {challenge.status}
+                            </span>
+                            {isCreator && (
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="text-red-500 hover:text-red-700 text-sm"
+                                    title="Delete challenge"
+                                >
+                                    🗑️ Delete
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {challenge.participants.length < 2 && (
@@ -186,8 +284,7 @@ const ChallengeDetail = () => {
                                     {p.overallProgressPercent}% overall
                                 </span>
                             </div>
-                            
-                            {/* Overall progress bar */}
+
                             <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
                                 <div
                                     className="bg-orange-500 h-3 rounded-full transition-all"
@@ -195,7 +292,6 @@ const ChallengeDetail = () => {
                                 />
                             </div>
 
-                            {/* Per-sport progress */}
                             <div className="space-y-2">
                                 {challenge.sportTypes.map((sport) => {
                                     const goalKm = p.goals?.[sport] || 0;
@@ -231,6 +327,33 @@ const ChallengeDetail = () => {
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-bold mb-2">Delete Challenge?</h3>
+                        <p className="text-gray-600 mb-4">
+                            This action cannot be undone. All progress data will be lost.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
+                            >
+                                {deleting ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
