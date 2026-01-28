@@ -44,7 +44,6 @@ const CreateChallenge = () => {
             newSelected.add(sport);
         }
         setSelectedSports(newSelected);
-        // Clear sports error when user selects
         if (fieldErrors.sports) {
             setFieldErrors(prev => ({ ...prev, sports: '' }));
         }
@@ -57,7 +56,6 @@ const CreateChallenge = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Clear previous errors
         setFieldErrors({});
         setError('');
 
@@ -68,7 +66,6 @@ const CreateChallenge = () => {
 
         setLoading(true);
 
-        // Build goals object with only selected sports
         const goalsToSend: Record<string, number> = {};
         selectedSports.forEach((sport) => {
             goalsToSend[sport] = goals[sport];
@@ -93,7 +90,6 @@ const CreateChallenge = () => {
                 }
             };
 
-            // Handle field-specific errors from backend
             if (axiosError.response?.data?.errors) {
                 setFieldErrors(axiosError.response.data.errors);
             } else {
@@ -118,6 +114,22 @@ const CreateChallenge = () => {
                     <h1 className="text-2xl font-bold mb-6">Create Challenge</h1>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Challenge Name */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Challenge Name <span className="text-gray-400">(optional)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value.slice(0, 50))}
+                                placeholder="e.g. Winter Battle"
+                                maxLength={50}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-3"
+                            />
+                            <p className="text-gray-400 text-xs mt-1">{name.length}/50</p>
+                        </div>
+
                         {/* Sport Selection */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -147,20 +159,6 @@ const CreateChallenge = () => {
                                                     {sport.emoji} {sport.label}
                                                 </span>
                                             </label>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Challenge Name <span className="text-gray-400">(optional)</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={name}
-                                                onChange={(e) => setName(e.target.value.slice(0, 50))}
-                                                placeholder="e.g. Winter Battle"
-                                                maxLength={50}
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3"
-                                            />
-                                            <p className="text-gray-400 text-xs mt-1">{name.length}/50</p>
                                         </div>
 
                                         {selectedSports.has(sport.type) && (
