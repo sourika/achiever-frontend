@@ -176,7 +176,7 @@ const Dashboard = () => {
                                         {/* Right column: Status + Delete */}
                                         <div className="flex flex-col items-end gap-2 ml-4">
                                         <span
-                                            className={`px-2 py-1 rounded text-xs ${
+                                            className={`px-2 py-1 rounded text-xs w-20 text-center ${
                                                 c.status === 'ACTIVE'
                                                     ? 'bg-green-100 text-green-800'
                                                     : c.status === 'PENDING'
@@ -186,13 +186,14 @@ const Dashboard = () => {
                                         >
                                             {c.status}
                                         </span>
+                                            <div className="h-6"></div>
                                             {isCreator(c) && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setDeleteId(c.id);
                                                     }}
-                                                    className="px-2 py-1 rounded text-xs bg-red-100 text-red-800 hover:bg-red-200"
+                                                    className="px-2 py-1 rounded text-xs w-20 text-center bg-red-100 text-red-800 hover:bg-red-200"
                                                 >
                                                     DELETE
                                                 </button>
