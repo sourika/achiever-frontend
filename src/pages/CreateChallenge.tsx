@@ -78,6 +78,7 @@ const CreateChallenge = () => {
                 goals: goalsToSend,
                 startAt,
                 endAt,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             });
             navigate(`/challenges/${response.data.id}`);
         } catch (err: unknown) {
