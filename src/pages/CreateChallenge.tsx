@@ -20,6 +20,7 @@ const SPORTS: SportConfig[] = [
 
 const CreateChallenge = () => {
     const navigate = useNavigate();
+    const [name, setName] = useState('');
     const [selectedSports, setSelectedSports] = useState<Set<SportType>>(new Set());
     const [goals, setGoals] = useState<Record<SportType, number>>({
         RUN: 50,
@@ -75,6 +76,7 @@ const CreateChallenge = () => {
 
         try {
             const response = await api.post('/api/challenges', {
+                name: name || null,
                 goals: goalsToSend,
                 startAt,
                 endAt,
@@ -145,6 +147,20 @@ const CreateChallenge = () => {
                                                     {sport.emoji} {sport.label}
                                                 </span>
                                             </label>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Challenge Name <span className="text-gray-400">(optional)</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value.slice(0, 50))}
+                                                placeholder="e.g. Winter Battle"
+                                                maxLength={50}
+                                                className="w-full border border-gray-300 rounded-lg px-4 py-3"
+                                            />
+                                            <p className="text-gray-400 text-xs mt-1">{name.length}/50</p>
                                         </div>
 
                                         {selectedSports.has(sport.type) && (

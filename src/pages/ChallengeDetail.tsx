@@ -12,6 +12,7 @@ interface Participant {
 
 interface Challenge {
     id: string;
+    name?: string;
     inviteCode: string;
     sportTypes: SportType[];
     startAt: string;
@@ -99,9 +100,6 @@ const ChallengeDetail = () => {
         WALK: { emoji: '🚶', label: 'Walking' },
     };
 
-    // Get sport emojis for display
-    const sportEmojis = challenge.sportTypes.map(s => sportConfig[s]?.emoji || '').join(' ');
-
     return (
         <div className="min-h-screen bg-gray-100 p-8">
             <div className="max-w-2xl mx-auto">
@@ -116,8 +114,7 @@ const ChallengeDetail = () => {
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <h1 className="text-2xl font-bold flex items-center gap-2">
-                                <span>{sportEmojis}</span>
-                                <span>Multi-Sport Challenge</span>
+                                <span>{challenge.name || 'Challenge'}</span>
                             </h1>
                             <p className="text-gray-600">
                                 {challenge.startAt} → {challenge.endAt}
