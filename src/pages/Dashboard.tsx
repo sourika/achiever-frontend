@@ -186,7 +186,7 @@ const Dashboard = () => {
                                         >
                                             {c.status}
                                         </span>
-                                            <div className="h-6"></div>
+
                                             {isCreator(c) && (
                                                 <button
                                                     onClick={(e) => {

@@ -8,6 +8,7 @@ interface Participant {
     userId: string;
     username: string;
     goals: Record<SportType, number>;
+    forfeitedAt?: string;
 }
 
 interface Challenge {
@@ -61,6 +62,13 @@ const ChallengeDetail = () => {
     // Delete state
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
+
+    // Leave state
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [leaving, setLeaving] = useState(false);
+
+    // Finish state
+    const [finishing, setFinishing] = useState(false);
 
     useEffect(() => {
         const loadChallenge = async () => {
@@ -126,7 +134,40 @@ const ChallengeDetail = () => {
         }
     };
 
+    const handleLeave = async () => {
+        setLeaving(true);
+        try {
+            await api.post(`/api/challenges/${id}/leave`);
+            navigate('/dashboard');
+        } catch (err) {
+            console.error('Failed to leave challenge', err);
+            setLeaving(false);
+            setShowLeaveConfirm(false);
+        }
+    };
+
+    const handleFinish = async () => {
+        setFinishing(true);
+        try {
+            const res = await api.post(`/api/challenges/${id}/finish`);
+            setChallenge(res.data);
+        } catch (err) {
+            console.error('Failed to finish challenge', err);
+        } finally {
+            setFinishing(false);
+        }
+    };
+
     const isCreator = user && challenge && user.id === challenge.createdBy.id;
+
+    // Check if current user has forfeited
+    const currentUserForfeited = user && challenge?.participants.find(
+        p => p.userId === user.id
+    )?.forfeitedAt;
+
+    // Check if opponent has forfeited
+    const opponent = user && challenge?.participants.find(p => p.userId !== user.id);
+    const opponentForfeited = opponent?.forfeitedAt;
 
     if (loading) {
         return (
@@ -154,6 +195,48 @@ const ChallengeDetail = () => {
                 >
                     ← Back to Dashboard
                 </button>
+
+                {/* User forfeited banner */}
+                {currentUserForfeited && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <p className="text-red-800 font-medium text-center">
+                            😔 You left this challenge
+                        </p>
+                    </div>
+                )}
+
+                {/* Challenge completed - user won */}
+                {challenge.status === 'COMPLETED' && isCreator && opponentForfeited && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <p className="text-green-800 font-medium text-center text-lg">
+                            🎉 Congratulations! You won!
+                        </p>
+                    </div>
+                )}
+
+                {/* Opponent left banner - for creator */}
+                {isCreator && opponentForfeited && challenge.status !== 'COMPLETED' && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <p className="text-yellow-800 font-medium mb-3">
+                            Your opponent ({opponent?.username}) has left the challenge.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleFinish}
+                                disabled={finishing}
+                                className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded disabled:opacity-50"
+                            >
+                                {finishing ? 'Finishing...' : '🏆 Finish & Win'}
+                            </button>
+                            <button
+                                onClick={() => {/* just dismiss, continue normally */}}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
+                            >
+                                Continue Solo
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div className="flex justify-between items-start mb-4">
@@ -224,7 +307,9 @@ const ChallengeDetail = () => {
                                         ? 'bg-green-100 text-green-800'
                                         : challenge.status === 'PENDING'
                                             ? 'bg-yellow-100 text-yellow-800'
-                                            : 'bg-gray-100 text-gray-800'
+                                            : challenge.status === 'COMPLETED'
+                                                ? 'bg-blue-100 text-blue-800'
+                                                : 'bg-gray-100 text-gray-800'
                                 }`}
                             >
                                 {challenge.status}
@@ -236,6 +321,15 @@ const ChallengeDetail = () => {
                                     title="Delete challenge"
                                 >
                                     🗑️ Delete
+                                </button>
+                            )}
+                            {!isCreator && !currentUserForfeited && challenge.status !== 'COMPLETED' && (
+                                <button
+                                    onClick={() => setShowLeaveConfirm(true)}
+                                    className="text-red-500 hover:text-red-700 text-sm"
+                                    title="Leave challenge"
+                                >
+                                    🚪 Leave
                                 </button>
                             )}
                         </div>
@@ -276,51 +370,62 @@ const ChallengeDetail = () => {
                         </button>
                     </div>
 
-                    {(progress?.participants ?? []).map((p) => (
-                        <div key={p.userId} className="mb-6 last:mb-0 border-b border-gray-100 pb-6 last:border-0">
-                            <div className="flex justify-between items-center mb-3">
-                                <span className="font-bold text-lg">{p.username}</span>
-                                <span className="text-lg font-medium text-orange-600">
-                                    {p.overallProgressPercent}% overall
-                                </span>
-                            </div>
+                    {(progress?.participants ?? []).map((p) => {
+                        const participantForfeited = challenge.participants.find(
+                            cp => cp.userId === p.userId
+                        )?.forfeitedAt;
 
-                            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-                                <div
-                                    className="bg-orange-500 h-3 rounded-full transition-all"
-                                    style={{ width: `${Math.min(p.overallProgressPercent, 100)}%` }}
-                                />
-                            </div>
+                        return (
+                            <div key={p.userId} className={`mb-6 last:mb-0 border-b border-gray-100 pb-6 last:border-0 ${participantForfeited ? 'opacity-50' : ''}`}>
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="font-bold text-lg">
+                                        {p.username}
+                                        {participantForfeited && (
+                                            <span className="text-red-500 text-sm ml-2">(left)</span>
+                                        )}
+                                    </span>
+                                    <span className="text-lg font-medium text-orange-600">
+                                        {p.overallProgressPercent}% overall
+                                    </span>
+                                </div>
 
-                            <div className="space-y-2">
-                                {challenge.sportTypes.map((sport) => {
-                                    const goalKm = p.goals?.[sport] || 0;
-                                    const distanceMeters = p.currentDistances?.[sport] || 0;
-                                    const percent = p.sportProgressPercents?.[sport] || 0;
-                                    const config = sportConfig[sport];
+                                <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                                    <div
+                                        className="bg-orange-500 h-3 rounded-full transition-all"
+                                        style={{ width: `${Math.min(p.overallProgressPercent, 100)}%` }}
+                                    />
+                                </div>
 
-                                    return (
-                                        <div key={sport} className="bg-gray-50 rounded-lg p-3">
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span>
-                                                    {config?.emoji} {config?.label}
-                                                </span>
-                                                <span className="text-gray-600">
-                                                    {(distanceMeters / 1000).toFixed(1)} / {goalKm} km ({percent}%)
-                                                </span>
+                                <div className="space-y-2">
+                                    {challenge.sportTypes.map((sport) => {
+                                        const goalKm = p.goals?.[sport] || 0;
+                                        const distanceMeters = p.currentDistances?.[sport] || 0;
+                                        const percent = p.sportProgressPercents?.[sport] || 0;
+                                        const config = sportConfig[sport];
+
+                                        return (
+                                            <div key={sport} className="bg-gray-50 rounded-lg p-3">
+                                                <div className="flex justify-between text-sm mb-1">
+                                                    <span>
+                                                        {config?.emoji} {config?.label}
+                                                    </span>
+                                                    <span className="text-gray-600">
+                                                        {(distanceMeters / 1000).toFixed(1)} / {goalKm} km ({percent}%)
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className="bg-blue-400 h-2 rounded-full transition-all"
+                                                        style={{ width: `${Math.min(percent, 100)}%` }}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                                <div
-                                                    className="bg-blue-400 h-2 rounded-full transition-all"
-                                                    style={{ width: `${Math.min(percent, 100)}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {(!progress?.participants || progress.participants.length === 0) && (
                         <p className="text-gray-500">No progress yet.</p>
@@ -349,6 +454,33 @@ const ChallengeDetail = () => {
                                 className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
                             >
                                 {deleting ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Leave Confirmation Modal */}
+            {showLeaveConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-bold mb-2">Leave Challenge?</h3>
+                        <p className="text-gray-600 mb-4">
+                            If you leave, you will forfeit this challenge. This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowLeaveConfirm(false)}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleLeave}
+                                disabled={leaving}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
+                            >
+                                {leaving ? 'Leaving...' : 'Leave & Forfeit'}
                             </button>
                         </div>
                     </div>
