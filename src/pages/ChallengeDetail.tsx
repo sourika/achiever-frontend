@@ -397,11 +397,12 @@ const ChallengeDetail = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    {challenge.sportTypes.map((sport) => {
-                                        const goalKm = p.goals?.[sport] || 0;
-                                        const distanceMeters = p.currentDistances?.[sport] || 0;
-                                        const percent = p.sportProgressPercents?.[sport] || 0;
-                                        const config = sportConfig[sport];
+                                    {Object.keys(p.goals || {}).map((sport) => {
+                                        const sportType = sport as SportType;
+                                        const goalKm = p.goals?.[sportType] || 0;
+                                        const distanceMeters = p.currentDistances?.[sportType] || 0;
+                                        const percent = p.sportProgressPercents?.[sportType] || 0;
+                                        const config = sportConfig[sportType];
 
                                         return (
                                             <div key={sport} className="bg-gray-50 rounded-lg p-3">
