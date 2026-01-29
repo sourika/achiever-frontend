@@ -67,6 +67,7 @@ const ChallengeDetail = () => {
     // Leave state
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [leaving, setLeaving] = useState(false);
+    const [dismissedForfeitBanner, setDismissedForfeitBanner] = useState(false);
 
     // Finish state
     const [finishing, setFinishing] = useState(false);
@@ -201,7 +202,7 @@ const ChallengeDetail = () => {
                 {currentUserForfeited && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                         <p className="text-red-800 font-medium text-center">
-                            😔 You left this challenge
+                            ☠️ You forfeited this challenge
                         </p>
                     </div>
                 )}
@@ -236,7 +237,7 @@ const ChallengeDetail = () => {
                 )}
 
                 {/* Opponent left banner - for creator */}
-                {isCreator && opponentForfeited && challenge.status !== 'COMPLETED' && (
+                {isCreator && opponentForfeited && challenge.status !== 'COMPLETED' && !dismissedForfeitBanner && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                         <p className="text-yellow-800 font-medium mb-3">
                             Your opponent ({opponent?.username}) has left the challenge.
@@ -250,7 +251,7 @@ const ChallengeDetail = () => {
                                 {finishing ? 'Finishing...' : '🏆 Finish & Win'}
                             </button>
                             <button
-                                onClick={() => {/* just dismiss, continue normally */}}
+                                onClick={() => setDismissedForfeitBanner(true)}
                                 className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
                             >
                                 Continue Solo
