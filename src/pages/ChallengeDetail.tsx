@@ -290,14 +290,19 @@ const ChallengeDetail = () => {
                                 {challenge.startAt} → {challenge.endAt}
                             </p>
                             <div className="flex flex-wrap gap-2 mt-2">
-                                {challenge.sportTypes.map(sport => (
-                                    <span
-                                        key={sport}
-                                        className="bg-gray-100 px-2 py-1 rounded text-sm"
-                                    >
-                                        {sportConfig[sport]?.emoji} {sportConfig[sport]?.label}
-                                    </span>
-                                ))}
+                                {Object.keys(
+                                    challenge.participants.find(p => p.userId === user?.id)?.goals || {}
+                                ).map(sport => {
+                                    const sportType = sport as SportType;
+                                    return (
+                                        <span
+                                            key={sport}
+                                            className="bg-gray-100 px-2 py-1 rounded text-sm"
+                                        >
+                                            {sportConfig[sportType]?.emoji} {sportConfig[sportType]?.label}
+                                        </span>
+                                    );
+                                })}
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
