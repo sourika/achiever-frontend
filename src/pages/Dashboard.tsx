@@ -238,13 +238,13 @@ const Dashboard = () => {
 
                                                     // Show status icon for completed/forfeited
                                                     if (hasForfeited || isLoser) {
-                                                        return <span className="text-gray-500">☠️ Lost</span>;
+                                                        return <span className="text-gray-500">😔</span>;
                                                     }
                                                     if (isWinner) {
-                                                        return <span className="text-yellow-500">🏆 Won</span>;
+                                                        return <span className="text-yellow-500">🏆</span>;
                                                     }
                                                     if (isTie) {
-                                                        return <span className="text-blue-500">🤝 Tie</span>;
+                                                        return <span className="text-blue-500">🤝</span>;
                                                     }
 
                                                     // Show action buttons for active challenges
