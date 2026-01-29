@@ -219,7 +219,7 @@ const ChallengeDetail = () => {
                                 : 'text-gray-800'
                         }`}>
                             {challenge.winnerId === user?.id
-                                ? '🎉 Congratulations! You won!'
+                                ? '🏆 Congratulations! You won!'
                                 : `🏁 Challenge ended. Winner: ${challenge.participants.find(p => p.userId === challenge.winnerId)?.username}`
                             }
                         </p>
@@ -487,8 +487,36 @@ const ChallengeDetail = () => {
                 </div>
             )}
 
-            {/* Leave Confirmation Modal */}
-            {showLeaveConfirm && (
+            {/* Leave Confirmation Modal - SCHEDULED (no consequences) */}
+            {showLeaveConfirm && challenge.status === 'SCHEDULED' && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-bold mb-2">Leave Challenge?</h3>
+                        <p className="text-gray-600 mb-4">
+                            The challenge hasn't started yet. You can leave without any consequences.
+                            The challenge will return to waiting for an opponent.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowLeaveConfirm(false)}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleLeave}
+                                disabled={leaving}
+                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded disabled:opacity-50"
+                            >
+                                {leaving ? 'Leaving...' : 'Leave'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Leave Confirmation Modal - ACTIVE (forfeit) */}
+            {showLeaveConfirm && challenge.status === 'ACTIVE' && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg p-6 max-w-sm w-full">
                         <h3 className="text-lg font-bold mb-2">Leave Challenge?</h3>
