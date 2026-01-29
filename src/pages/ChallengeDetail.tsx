@@ -21,6 +21,7 @@ interface Challenge {
     status: string;
     createdBy: { id: string; username: string };
     participants: Participant[];
+    winnerId?: string;
 }
 
 interface ParticipantProgress {
@@ -205,11 +206,31 @@ const ChallengeDetail = () => {
                     </div>
                 )}
 
-                {/* Challenge completed - user won */}
-                {challenge.status === 'COMPLETED' && isCreator && opponentForfeited && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                        <p className="text-green-800 font-medium text-center text-lg">
-                            🎉 Congratulations! You won!
+                {/* Challenge completed - show winner */}
+                {challenge.status === 'COMPLETED' && challenge.winnerId && (
+                    <div className={`border rounded-lg p-4 mb-6 ${
+                        challenge.winnerId === user?.id
+                            ? 'bg-green-50 border-green-200'
+                            : 'bg-gray-50 border-gray-200'
+                    }`}>
+                        <p className={`font-medium text-center text-lg ${
+                            challenge.winnerId === user?.id
+                                ? 'text-green-800'
+                                : 'text-gray-800'
+                        }`}>
+                            {challenge.winnerId === user?.id
+                                ? '🎉 Congratulations! You won!'
+                                : `🏁 Challenge ended. Winner: ${challenge.participants.find(p => p.userId === challenge.winnerId)?.username}`
+                            }
+                        </p>
+                    </div>
+                )}
+
+                {/* Challenge completed - tie */}
+                {challenge.status === 'COMPLETED' && !challenge.winnerId && !opponentForfeited && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <p className="text-blue-800 font-medium text-center text-lg">
+                            🤝 It's a tie!
                         </p>
                     </div>
                 )}
