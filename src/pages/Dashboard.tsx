@@ -224,7 +224,11 @@ const Dashboard = () => {
                                                                     ? 'bg-purple-100 text-purple-800'
                                                                     : c.status === 'COMPLETED'
                                                                         ? 'bg-blue-100 text-blue-800'
-                                                                        : 'bg-gray-100 text-gray-800'
+                                                                        : c.status === 'EXPIRED'
+                                                                            ? 'bg-gray-100 text-gray-500'
+                                                                            : c.status === 'CANCELLED'
+                                                                                ? 'bg-red-100 text-red-800'
+                                                                                : 'bg-gray-100 text-gray-800'
                                                     }`}
                                                 >
                                                     {c.status}
@@ -235,8 +239,12 @@ const Dashboard = () => {
                                                     const isWinner = c.winnerId === user?.id;
                                                     const isTie = c.status === 'COMPLETED' && !c.winnerId;
                                                     const isLoser = c.status === 'COMPLETED' && c.winnerId && c.winnerId !== user?.id;
+                                                    const isExpired = c.status === 'EXPIRED';
 
-                                                    // Show status icon for completed/forfeited
+                                                    // Show status icon for completed/forfeited/expired
+                                                    if (isExpired) {
+                                                        return <span className="text-gray-400">⏰</span>;
+                                                    }
                                                     if (hasForfeited || isLoser) {
                                                         return <span className="text-gray-500">😔</span>;
                                                     }
@@ -247,21 +255,46 @@ const Dashboard = () => {
                                                         return <span className="text-blue-500">🤝</span>;
                                                     }
 
-                                                    // Show action buttons for active challenges
+                                                    // Show action buttons for non-completed challenges
                                                     if (isCreator(c)) {
+                                                        // Can delete: PENDING, EXPIRED, COMPLETED, or SCHEDULED without opponent
+                                                        const canDelete = !hasForfeited && 
+                                                            c.status !== 'ACTIVE' &&
+                                                            !(c.status === 'SCHEDULED' && c.participants.length > 1);
+                                                        
+                                                        // Can forfeit: ACTIVE and not already forfeited
+                                                        const canForfeit = c.status === 'ACTIVE' && !hasForfeited;
+
                                                         return (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setDeleteId(c.id);
-                                                                }}
-                                                                className="text-red-500 hover:text-red-700"
-                                                            >
-                                                                🗑️ Delete
-                                                            </button>
+                                                            <div className="flex flex-col items-end gap-1">
+                                                                {canDelete && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setDeleteId(c.id);
+                                                                        }}
+                                                                        className="text-red-500 hover:text-red-700"
+                                                                    >
+                                                                        🗑️ Delete
+                                                                    </button>
+                                                                )}
+                                                                {canForfeit && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setLeaveId(c.id);
+                                                                        }}
+                                                                        className="text-orange-500 hover:text-orange-700"
+                                                                    >
+                                                                        🚪 Forfeit
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         );
                                                     } else {
-                                                        return (
+                                                        // Opponent can leave SCHEDULED or forfeit ACTIVE
+                                                        const canLeave = c.status === 'SCHEDULED' || c.status === 'ACTIVE';
+                                                        return canLeave ? (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -271,7 +304,7 @@ const Dashboard = () => {
                                                             >
                                                                 🚪 Leave
                                                             </button>
-                                                        );
+                                                        ) : null;
                                                     }
                                                 })()}
                                             </div>

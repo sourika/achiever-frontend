@@ -158,6 +158,53 @@ const JoinChallenge = () => {
         );
     }
 
+    // Check if challenge has expired (status EXPIRED or endAt passed)
+    const isExpired = challenge && (
+        challenge.status === 'EXPIRED' || 
+        new Date(challenge.endAt) < new Date(new Date().toDateString())
+    );
+    
+    if (isExpired) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
+                    <h1 className="text-xl font-bold text-gray-600 mb-4">⏰ Challenge Expired</h1>
+                    <p className="text-gray-600 mb-6">
+                        This challenge ended on {challenge?.endAt}. You can no longer join.
+                    </p>
+                    <button
+                        onClick={() => navigate('/')}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg"
+                    >
+                        Go Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Check if challenge is already full
+    const isFull = challenge && challenge.participants.length >= 2;
+    
+    if (isFull) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
+                    <h1 className="text-xl font-bold text-gray-600 mb-4">Challenge Full</h1>
+                    <p className="text-gray-600 mb-6">
+                        This challenge already has the maximum number of participants.
+                    </p>
+                    <button
+                        onClick={() => navigate('/')}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg"
+                    >
+                        Go Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const sortedCreatorSports = challenge ? sortSports(challenge.sportTypes) : [];
 
     return (

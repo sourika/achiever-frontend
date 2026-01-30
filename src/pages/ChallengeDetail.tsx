@@ -236,8 +236,17 @@ const ChallengeDetail = () => {
                     </div>
                 )}
 
-                {/* Opponent left banner - for creator */}
-                {isCreator && opponentForfeited && challenge.status !== 'COMPLETED' && !dismissedForfeitBanner && (
+                {/* Challenge expired - no opponent joined */}
+                {challenge.status === 'EXPIRED' && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                        <p className="text-gray-600 font-medium text-center text-lg">
+                            ⏰ Challenge expired — no opponent joined in time
+                        </p>
+                    </div>
+                )}
+
+                {/* Opponent left banner - for any participant whose opponent forfeited */}
+                {opponentForfeited && challenge.status !== 'COMPLETED' && !currentUserForfeited && !dismissedForfeitBanner && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                         <p className="text-yellow-800 font-medium mb-3">
                             Your opponent ({opponent?.username}) has left the challenge.
@@ -338,12 +347,19 @@ const ChallengeDetail = () => {
                                                 ? 'bg-purple-100 text-purple-800'
                                                 : challenge.status === 'COMPLETED'
                                                     ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-gray-100 text-gray-800'
+                                                    : challenge.status === 'EXPIRED'
+                                                        ? 'bg-gray-100 text-gray-500'
+                                                        : challenge.status === 'CANCELLED'
+                                                            ? 'bg-red-100 text-red-800'
+                                                            : 'bg-gray-100 text-gray-800'
                                 }`}
                             >
                                 {challenge.status}
                             </span>
-                            {isCreator && (
+                            {/* Creator can delete: PENDING, EXPIRED, COMPLETED, or SCHEDULED without opponent */}
+                            {isCreator && !currentUserForfeited && 
+                             challenge.status !== 'ACTIVE' &&
+                             !(challenge.status === 'SCHEDULED' && challenge.participants.length > 1) && (
                                 <button
                                     onClick={() => setShowDeleteConfirm(true)}
                                     className="text-red-500 hover:text-red-700 text-lg"
@@ -351,12 +367,23 @@ const ChallengeDetail = () => {
                                     <span className="text-xl">🗑️</span> Delete
                                 </button>
                             )}
-                            {!isCreator && !currentUserForfeited && challenge.status !== 'COMPLETED' && (
+                            {/* Opponent can leave SCHEDULED or ACTIVE only */}
+                            {!isCreator && !currentUserForfeited && 
+                             (challenge.status === 'SCHEDULED' || challenge.status === 'ACTIVE') && (
                                 <button
                                     onClick={() => setShowLeaveConfirm(true)}
                                     className="text-red-500 hover:text-red-700 text-lg"
                                 >
                                     <span className="text-xl">🚪</span> Leave
+                                </button>
+                            )}
+                            {/* Creator can forfeit only in ACTIVE status */}
+                            {isCreator && !currentUserForfeited && challenge.status === 'ACTIVE' && (
+                                <button
+                                    onClick={() => setShowLeaveConfirm(true)}
+                                    className="text-red-500 hover:text-red-700 text-lg"
+                                >
+                                    <span className="text-xl">🚪</span> Forfeit
                                 </button>
                             )}
                         </div>
@@ -388,13 +415,15 @@ const ChallengeDetail = () => {
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold">Progress</h2>
-                        <button
-                            onClick={handleSync}
-                            disabled={syncing}
-                            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded text-sm disabled:opacity-50"
-                        >
-                            {syncing ? 'Syncing...' : '🔄 Sync Strava'}
-                        </button>
+                        {challenge.status !== 'COMPLETED' && (
+                            <button
+                                onClick={handleSync}
+                                disabled={syncing}
+                                className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded text-sm disabled:opacity-50"
+                            >
+                                {syncing ? 'Syncing...' : '🔄 Sync Strava'}
+                            </button>
+                        )}
                     </div>
 
                     {(progress?.participants ?? []).map((p) => {
@@ -488,8 +517,8 @@ const ChallengeDetail = () => {
                 </div>
             )}
 
-            {/* Leave Confirmation Modal - SCHEDULED (no consequences) */}
-            {showLeaveConfirm && challenge.status === 'SCHEDULED' && (
+            {/* Leave Confirmation Modal - SCHEDULED (no consequences) - only for opponent */}
+            {showLeaveConfirm && challenge.status === 'SCHEDULED' && !isCreator && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg p-6 max-w-sm w-full">
                         <h3 className="text-lg font-bold mb-2">Leave Challenge?</h3>
