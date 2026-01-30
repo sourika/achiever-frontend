@@ -201,8 +201,8 @@ const ChallengeDetail = () => {
                 {/* User forfeited banner */}
                 {currentUserForfeited && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                        <p className="text-red-800 font-medium text-center">
-                            ☠️ You forfeited this challenge
+                        <p className="text-red-800 font-medium text-center text-lg">
+                            <span className="text-4xl">😔</span><br />You forfeited this challenge
                         </p>
                     </div>
                 )}
@@ -220,7 +220,7 @@ const ChallengeDetail = () => {
                                 : 'text-gray-800'
                         }`}>
                             {challenge.winnerId === user?.id
-                                ? '🏆 Congratulations! You won!'
+                                ? <><span className="text-5xl">🏆</span><br />Congratulations! You won!</>
                                 : `🏁 Challenge ended. Winner: ${challenge.participants.find(p => p.userId === challenge.winnerId)?.username}`
                             }
                         </p>
@@ -231,7 +231,7 @@ const ChallengeDetail = () => {
                 {challenge.status === 'COMPLETED' && !challenge.winnerId && !opponentForfeited && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                         <p className="text-blue-800 font-medium text-center text-lg">
-                            🤝 It's a tie!
+                            <span className="text-5xl">🤝</span><br />It's a tie!
                         </p>
                     </div>
                 )}
@@ -240,7 +240,7 @@ const ChallengeDetail = () => {
                 {challenge.status === 'EXPIRED' && (
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                         <p className="text-gray-600 font-medium text-center text-lg">
-                            ⏰ Challenge expired — no opponent joined in time
+                            <span className="text-4xl">⏰</span><br />Challenge expired — no opponent joined in time
                         </p>
                     </div>
                 )}
@@ -356,34 +356,50 @@ const ChallengeDetail = () => {
                             >
                                 {challenge.status}
                             </span>
-                            {/* Creator can delete: PENDING, EXPIRED, COMPLETED, or SCHEDULED without opponent */}
-                            {isCreator && !currentUserForfeited && 
-                             challenge.status !== 'ACTIVE' &&
-                             !(challenge.status === 'SCHEDULED' && challenge.participants.length > 1) && (
+                            {/* Creator can delete: PENDING, EXPIRED, COMPLETED */}
+                            {isCreator && !currentUserForfeited &&
+                                (challenge.status === 'PENDING' || challenge.status === 'EXPIRED' || challenge.status === 'COMPLETED') && (
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(true)}
+                                        className="text-red-500 hover:text-red-700 text-lg flex items-center gap-1"
+                                    >
+                                        <span className="text-3xl">🗑️</span> Delete
+                                    </button>
+                                )}
+                            {/* Creator wants to leave SCHEDULED - show message */}
+                            {isCreator && !currentUserForfeited && challenge.status === 'SCHEDULED' && challenge.participants.length > 1 && (
                                 <button
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                    className="text-red-500 hover:text-red-700 text-lg"
+                                    onClick={() => alert('Please ask your opponent to leave first. Once they leave, you can delete the challenge.')}
+                                    className="text-orange-500 hover:text-orange-700 text-lg flex items-center gap-1"
                                 >
-                                    <span className="text-xl">🗑️</span> Delete
+                                    <span className="text-3xl">🚪</span> Leave
                                 </button>
                             )}
-                            {/* Opponent can leave SCHEDULED or ACTIVE only */}
-                            {!isCreator && !currentUserForfeited && 
-                             (challenge.status === 'SCHEDULED' || challenge.status === 'ACTIVE') && (
+                            {/* Opponent can leave SCHEDULED */}
+                            {!isCreator && !currentUserForfeited && challenge.status === 'SCHEDULED' && (
                                 <button
                                     onClick={() => setShowLeaveConfirm(true)}
-                                    className="text-red-500 hover:text-red-700 text-lg"
+                                    className="text-orange-500 hover:text-orange-700 text-lg flex items-center gap-1"
                                 >
-                                    <span className="text-xl">🚪</span> Leave
+                                    <span className="text-3xl">🚪</span> Leave
+                                </button>
+                            )}
+                            {/* Opponent can forfeit ACTIVE */}
+                            {!isCreator && !currentUserForfeited && challenge.status === 'ACTIVE' && (
+                                <button
+                                    onClick={() => setShowLeaveConfirm(true)}
+                                    className="text-red-500 hover:text-red-700 text-lg flex items-center gap-1"
+                                >
+                                    <span className="text-3xl">🚪</span> Forfeit
                                 </button>
                             )}
                             {/* Creator can forfeit only in ACTIVE status */}
                             {isCreator && !currentUserForfeited && challenge.status === 'ACTIVE' && (
                                 <button
                                     onClick={() => setShowLeaveConfirm(true)}
-                                    className="text-red-500 hover:text-red-700 text-lg"
+                                    className="text-red-500 hover:text-red-700 text-lg flex items-center gap-1"
                                 >
-                                    <span className="text-xl">🚪</span> Forfeit
+                                    <span className="text-3xl">🚪</span> Forfeit
                                 </button>
                             )}
                         </div>
@@ -545,13 +561,13 @@ const ChallengeDetail = () => {
                 </div>
             )}
 
-            {/* Leave Confirmation Modal - ACTIVE (forfeit) */}
+            {/* Forfeit Confirmation Modal - ACTIVE */}
             {showLeaveConfirm && challenge.status === 'ACTIVE' && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                        <h3 className="text-lg font-bold mb-2">Leave Challenge?</h3>
+                        <h3 className="text-lg font-bold mb-2">Forfeit Challenge?</h3>
                         <p className="text-gray-600 mb-4">
-                            If you leave, you will forfeit this challenge. This action cannot be undone.
+                            If you forfeit, you will lose this challenge. This action cannot be undone.
                         </p>
                         <div className="flex gap-3">
                             <button
@@ -565,7 +581,7 @@ const ChallengeDetail = () => {
                                 disabled={leaving}
                                 className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
                             >
-                                {leaving ? 'Leaving...' : 'Leave & Forfeit'}
+                                {leaving ? 'Forfeiting...' : 'Forfeit'}
                             </button>
                         </div>
                     </div>

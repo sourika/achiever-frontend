@@ -50,7 +50,7 @@ const Home = () => {
                 <div className="bg-white rounded-lg shadow-md p-8">
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-orange-500 mb-2">Achiever</h1>
-                        <p className="text-gray-600">Fitness challenges with friends</p>
+                        <p className="text-gray-600">Compete in fitness challenges with friends</p>
                     </div>
 
                     <h2 className="text-xl font-semibold text-center mb-6">

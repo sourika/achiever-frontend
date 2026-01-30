@@ -243,25 +243,28 @@ const Dashboard = () => {
 
                                                     // Show status icon for completed/forfeited/expired
                                                     if (isExpired) {
-                                                        return <span className="text-gray-400">⏰</span>;
+                                                        return <span className="text-4xl">⏰</span>;
                                                     }
                                                     if (hasForfeited || isLoser) {
-                                                        return <span className="text-gray-500">😔</span>;
+                                                        return <span className="text-4xl">😔</span>;
                                                     }
                                                     if (isWinner) {
-                                                        return <span className="text-yellow-500">🏆</span>;
+                                                        return <span className="text-4xl">🏆</span>;
                                                     }
                                                     if (isTie) {
-                                                        return <span className="text-blue-500">🤝</span>;
+                                                        return <span className="text-4xl">🤝</span>;
                                                     }
 
                                                     // Show action buttons for non-completed challenges
                                                     if (isCreator(c)) {
-                                                        // Can delete: PENDING, EXPIRED, COMPLETED, or SCHEDULED without opponent
-                                                        const canDelete = !hasForfeited && 
-                                                            c.status !== 'ACTIVE' &&
-                                                            !(c.status === 'SCHEDULED' && c.participants.length > 1);
-                                                        
+                                                        // Can delete: PENDING, EXPIRED, COMPLETED
+                                                        const canDelete = !hasForfeited &&
+                                                            (c.status === 'PENDING' || c.status === 'EXPIRED' || c.status === 'COMPLETED');
+
+                                                        // Can leave (shows message): SCHEDULED with opponent
+                                                        const canLeave = !hasForfeited &&
+                                                            c.status === 'SCHEDULED' && c.participants.length > 1;
+
                                                         // Can forfeit: ACTIVE and not already forfeited
                                                         const canForfeit = c.status === 'ACTIVE' && !hasForfeited;
 
@@ -273,9 +276,20 @@ const Dashboard = () => {
                                                                             e.stopPropagation();
                                                                             setDeleteId(c.id);
                                                                         }}
-                                                                        className="text-red-500 hover:text-red-700"
+                                                                        className="text-red-500 hover:text-red-700 flex items-center gap-1"
                                                                     >
-                                                                        🗑️ Delete
+                                                                        <span className="text-2xl">🗑️</span> Delete
+                                                                    </button>
+                                                                )}
+                                                                {canLeave && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            alert('Please ask your opponent to leave first. Once they leave, you can delete the challenge.');
+                                                                        }}
+                                                                        className="text-orange-500 hover:text-orange-700 flex items-center gap-1"
+                                                                    >
+                                                                        <span className="text-2xl">🚪</span> Leave
                                                                     </button>
                                                                 )}
                                                                 {canForfeit && (
@@ -284,27 +298,42 @@ const Dashboard = () => {
                                                                             e.stopPropagation();
                                                                             setLeaveId(c.id);
                                                                         }}
-                                                                        className="text-orange-500 hover:text-orange-700"
+                                                                        className="text-red-500 hover:text-red-700 flex items-center gap-1"
                                                                     >
-                                                                        🚪 Forfeit
+                                                                        <span className="text-2xl">🚪</span> Forfeit
                                                                     </button>
                                                                 )}
                                                             </div>
                                                         );
                                                     } else {
-                                                        // Opponent can leave SCHEDULED or forfeit ACTIVE
-                                                        const canLeave = c.status === 'SCHEDULED' || c.status === 'ACTIVE';
-                                                        return canLeave ? (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setLeaveId(c.id);
-                                                                }}
-                                                                className="text-red-500 hover:text-red-700"
-                                                            >
-                                                                🚪 Leave
-                                                            </button>
-                                                        ) : null;
+                                                        // Opponent: Leave for SCHEDULED, Forfeit for ACTIVE
+                                                        if (c.status === 'SCHEDULED') {
+                                                            return (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setLeaveId(c.id);
+                                                                    }}
+                                                                    className="text-orange-500 hover:text-orange-700 flex items-center gap-1"
+                                                                >
+                                                                    <span className="text-2xl">🚪</span> Leave
+                                                                </button>
+                                                            );
+                                                        }
+                                                        if (c.status === 'ACTIVE' && !hasForfeited) {
+                                                            return (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setLeaveId(c.id);
+                                                                    }}
+                                                                    className="text-red-500 hover:text-red-700 flex items-center gap-1"
+                                                                >
+                                                                    <span className="text-2xl">🚪</span> Forfeit
+                                                                </button>
+                                                            );
+                                                        }
+                                                        return null;
                                                     }
                                                 })()}
                                             </div>
@@ -345,7 +374,6 @@ const Dashboard = () => {
             )}
 
             {/* Leave Confirmation Modal */}
-            {/* Leave Confirmation Modal */}
             {leaveId && (() => {
                 const challenge = challenges.find(c => c.id === leaveId);
                 const isScheduled = challenge?.status === 'SCHEDULED';
@@ -353,11 +381,13 @@ const Dashboard = () => {
                 return (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                            <h3 className="text-lg font-bold mb-2">Leave Challenge?</h3>
+                            <h3 className="text-lg font-bold mb-2">
+                                {isScheduled ? 'Leave Challenge?' : 'Forfeit Challenge?'}
+                            </h3>
                             <p className="text-gray-600 mb-4">
                                 {isScheduled
                                     ? "The challenge hasn't started yet. You can leave without any consequences. The challenge will return to waiting for an opponent."
-                                    : "If you leave, you will forfeit this challenge. This action cannot be undone."
+                                    : "If you forfeit, you will lose this challenge. This action cannot be undone."
                                 }
                             </p>
                             <div className="flex gap-3">
@@ -376,7 +406,7 @@ const Dashboard = () => {
                                             : 'bg-red-500 hover:bg-red-600'
                                     }`}
                                 >
-                                    {leaving ? 'Leaving...' : (isScheduled ? 'Leave' : 'Leave & Forfeit')}
+                                    {leaving ? 'Leaving...' : (isScheduled ? 'Leave' : 'Forfeit')}
                                 </button>
                             </div>
                         </div>
