@@ -67,10 +67,6 @@ const ChallengeDetail = () => {
     // Leave state
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [leaving, setLeaving] = useState(false);
-    const [dismissedForfeitBanner, setDismissedForfeitBanner] = useState(false);
-
-    // Finish state
-    const [finishing, setFinishing] = useState(false);
 
     useEffect(() => {
         const loadChallenge = async () => {
@@ -140,23 +136,18 @@ const ChallengeDetail = () => {
         setLeaving(true);
         try {
             await api.post(`/api/challenges/${id}/leave`);
-            navigate('/dashboard');
+            // Reload challenge to see updated status
+            const [challengeRes, progressRes] = await Promise.all([
+                api.get(`/api/challenges/${id}`),
+                api.get(`/api/challenges/${id}/progress`),
+            ]);
+            setChallenge(challengeRes.data);
+            setProgress(progressRes.data);
+            setShowLeaveConfirm(false);
         } catch (err) {
             console.error('Failed to leave challenge', err);
-            setLeaving(false);
-            setShowLeaveConfirm(false);
-        }
-    };
-
-    const handleFinish = async () => {
-        setFinishing(true);
-        try {
-            const res = await api.post(`/api/challenges/${id}/finish`);
-            setChallenge(res.data);
-        } catch (err) {
-            console.error('Failed to finish challenge', err);
         } finally {
-            setFinishing(false);
+            setLeaving(false);
         }
     };
 
@@ -166,10 +157,6 @@ const ChallengeDetail = () => {
     const currentUserForfeited = user && challenge?.participants.find(
         p => p.userId === user.id
     )?.forfeitedAt;
-
-    // Check if opponent has forfeited
-    const opponent = user && challenge?.participants.find(p => p.userId !== user.id);
-    const opponentForfeited = opponent?.forfeitedAt;
 
     if (loading) {
         return (
@@ -208,7 +195,7 @@ const ChallengeDetail = () => {
                 )}
 
                 {/* Challenge completed - show winner */}
-                {challenge.status === 'COMPLETED' && challenge.winnerId && (
+                {challenge.status === 'COMPLETED' && challenge.winnerId && !currentUserForfeited && (
                     <div className={`border rounded-lg p-4 mb-6 ${
                         challenge.winnerId === user?.id
                             ? 'bg-green-50 border-green-200'
@@ -227,8 +214,8 @@ const ChallengeDetail = () => {
                     </div>
                 )}
 
-                {/* Challenge completed - tie */}
-                {challenge.status === 'COMPLETED' && !challenge.winnerId && !opponentForfeited && (
+                {/* Challenge completed - tie (only if no forfeit involved) */}
+                {challenge.status === 'COMPLETED' && !challenge.winnerId && !challenge.participants.some(p => p.forfeitedAt) && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                         <p className="text-blue-800 font-medium text-center text-lg">
                             <span className="text-5xl">🤝</span><br />It's a tie!
@@ -242,30 +229,6 @@ const ChallengeDetail = () => {
                         <p className="text-gray-600 font-medium text-center text-lg">
                             <span className="text-4xl">⏰</span><br />Challenge expired — no opponent joined in time
                         </p>
-                    </div>
-                )}
-
-                {/* Opponent left banner - for any participant whose opponent forfeited */}
-                {opponentForfeited && challenge.status !== 'COMPLETED' && !currentUserForfeited && !dismissedForfeitBanner && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                        <p className="text-yellow-800 font-medium mb-3">
-                            Your opponent ({opponent?.username}) has left the challenge.
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleFinish}
-                                disabled={finishing}
-                                className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded disabled:opacity-50"
-                            >
-                                {finishing ? 'Finishing...' : '🏆 Finish & Win'}
-                            </button>
-                            <button
-                                onClick={() => setDismissedForfeitBanner(true)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
-                            >
-                                Continue Solo
-                            </button>
-                        </div>
                     </div>
                 )}
 
@@ -431,7 +394,7 @@ const ChallengeDetail = () => {
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold">Progress</h2>
-                        {challenge.status !== 'COMPLETED' && challenge.status !== 'EXPIRED' && (
+                        {challenge.status === 'ACTIVE' && (
                             <button
                                 onClick={handleSync}
                                 disabled={syncing}
@@ -453,7 +416,7 @@ const ChallengeDetail = () => {
                                     <span className="font-bold text-lg">
                                         {p.username}
                                         {participantForfeited && (
-                                            <span className="text-red-500 text-sm ml-2">(left)</span>
+                                            <span className="text-red-500 text-sm ml-2">(forfeited)</span>
                                         )}
                                     </span>
                                     <span className="text-lg font-medium text-orange-600">
@@ -567,7 +530,7 @@ const ChallengeDetail = () => {
                     <div className="bg-white rounded-lg p-6 max-w-sm w-full">
                         <h3 className="text-lg font-bold mb-2">Forfeit Challenge?</h3>
                         <p className="text-gray-600 mb-4">
-                            If you forfeit, you will lose this challenge. This action cannot be undone.
+                            If you forfeit, your opponent will win and the challenge will end immediately. This action cannot be undone.
                         </p>
                         <div className="flex gap-3">
                             <button

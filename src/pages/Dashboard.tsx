@@ -90,7 +90,7 @@ const Dashboard = () => {
                 // For SCHEDULED: participant is removed completely
                 setChallenges(challenges.filter(c => c.id !== id));
             } else {
-                // For ACTIVE: participant is forfeited, update the challenge
+                // For ACTIVE: challenge becomes COMPLETED, update in list
                 setChallenges(challenges.map(c => c.id === id ? res.data : c));
             }
             setLeaveId(null);
@@ -199,7 +199,7 @@ const Dashboard = () => {
                                                 {/* Row 2: Participants */}
                                                 <div className="flex items-center gap-2 text-gray-600">
                                                     <span>{getParticipantsDisplay(c)}</span>
-                                                    {c.participants.length < 2 && c.status !== 'EXPIRED' && (
+                                                    {c.participants.length < 2 && c.status !== 'EXPIRED' && c.status !== 'COMPLETED' && (
                                                         <span className="text-xs text-gray-400">
                                                             (waiting for opponent)
                                                         </span>
@@ -237,7 +237,7 @@ const Dashboard = () => {
                                                     const currentParticipant = c.participants.find(p => p.userId === user?.id);
                                                     const hasForfeited = currentParticipant?.forfeitedAt;
                                                     const isWinner = c.winnerId === user?.id;
-                                                    const isTie = c.status === 'COMPLETED' && !c.winnerId;
+                                                    const isTie = c.status === 'COMPLETED' && !c.winnerId && !c.participants.some(p => p.forfeitedAt);
                                                     const isLoser = c.status === 'COMPLETED' && c.winnerId && c.winnerId !== user?.id;
                                                     const isExpired = c.status === 'EXPIRED';
 
@@ -245,11 +245,14 @@ const Dashboard = () => {
                                                     if (isExpired) {
                                                         return <span className="text-4xl">⏰</span>;
                                                     }
-                                                    if (hasForfeited || isLoser) {
+                                                    if (hasForfeited) {
                                                         return <span className="text-4xl">😔</span>;
                                                     }
                                                     if (isWinner) {
                                                         return <span className="text-4xl">🏆</span>;
+                                                    }
+                                                    if (isLoser) {
+                                                        return <span className="text-4xl">😔</span>;
                                                     }
                                                     if (isTie) {
                                                         return <span className="text-4xl">🤝</span>;
@@ -387,7 +390,7 @@ const Dashboard = () => {
                             <p className="text-gray-600 mb-4">
                                 {isScheduled
                                     ? "The challenge hasn't started yet. You can leave without any consequences. The challenge will return to waiting for an opponent."
-                                    : "If you forfeit, you will lose this challenge. This action cannot be undone."
+                                    : "If you forfeit, your opponent will win and the challenge will end immediately. This action cannot be undone."
                                 }
                             </p>
                             <div className="flex gap-3">
