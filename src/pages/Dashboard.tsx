@@ -300,7 +300,7 @@ const Dashboard = () => {
                                                                         }}
                                                                         className="text-red-500 hover:text-red-700 flex items-center gap-1"
                                                                     >
-                                                                        <span className="text-2xl">🚪</span> Forfeit
+                                                                        <span className="text-2xl">🏳️</span> Forfeit
                                                                     </button>
                                                                 )}
                                                             </div>
@@ -329,7 +329,7 @@ const Dashboard = () => {
                                                                     }}
                                                                     className="text-red-500 hover:text-red-700 flex items-center gap-1"
                                                                 >
-                                                                    <span className="text-2xl">🚪</span> Forfeit
+                                                                    <span className="text-2xl">🏳️</span> Forfeit
                                                                 </button>
                                                             );
                                                         }

@@ -390,7 +390,7 @@ const ChallengeDetail = () => {
                                     onClick={() => setShowLeaveConfirm(true)}
                                     className="text-red-500 hover:text-red-700 text-lg flex items-center gap-1"
                                 >
-                                    <span className="text-3xl">🚪</span> Forfeit
+                                    <span className="text-3xl">🏳️</span> Forfeit
                                 </button>
                             )}
                             {/* Creator can forfeit only in ACTIVE status */}
@@ -399,13 +399,13 @@ const ChallengeDetail = () => {
                                     onClick={() => setShowLeaveConfirm(true)}
                                     className="text-red-500 hover:text-red-700 text-lg flex items-center gap-1"
                                 >
-                                    <span className="text-3xl">🚪</span> Forfeit
+                                    <span className="text-3xl">🏳️</span> Forfeit
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    {challenge.participants.length < 2 && (
+                    {challenge.participants.length < 2 && challenge.status !== 'EXPIRED' && (
                         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
                             <p className="text-orange-800 font-medium">
                                 Waiting for opponent to join
@@ -431,7 +431,7 @@ const ChallengeDetail = () => {
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold">Progress</h2>
-                        {challenge.status !== 'COMPLETED' && (
+                        {challenge.status !== 'COMPLETED' && challenge.status !== 'EXPIRED' && (
                             <button
                                 onClick={handleSync}
                                 disabled={syncing}
