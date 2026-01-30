@@ -199,7 +199,7 @@ const Dashboard = () => {
                                                 {/* Row 2: Participants */}
                                                 <div className="flex items-center gap-2 text-gray-600">
                                                     <span>{getParticipantsDisplay(c)}</span>
-                                                    {c.participants.length < 2 && (
+                                                    {c.participants.length < 2 && c.status !== 'EXPIRED' && (
                                                         <span className="text-xs text-gray-400">
                                                             (waiting for opponent)
                                                         </span>
