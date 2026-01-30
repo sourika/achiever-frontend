@@ -208,7 +208,7 @@ const ChallengeDetail = () => {
                         }`}>
                             {challenge.winnerId === user?.id
                                 ? <><span className="text-5xl">🏆</span><br />Congratulations! You won!</>
-                                : `🏁 Challenge ended. Winner: ${challenge.participants.find(p => p.userId === challenge.winnerId)?.username}`
+                                : <><span className="text-5xl">🏁</span><br />Challenge ended. Winner: {challenge.participants.find(p => p.userId === challenge.winnerId)?.username}</>
                             }
                         </p>
                     </div>
@@ -320,7 +320,7 @@ const ChallengeDetail = () => {
                                 {challenge.status}
                             </span>
                             {/* Creator can delete: PENDING, EXPIRED, COMPLETED */}
-                            {isCreator && !currentUserForfeited &&
+                            {isCreator &&
                                 (challenge.status === 'PENDING' || challenge.status === 'EXPIRED' || challenge.status === 'COMPLETED') && (
                                     <button
                                         onClick={() => setShowDeleteConfirm(true)}
