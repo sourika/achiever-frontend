@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import NotificationBell from '../components/NotificationBell';
 
 type SportType = 'RUN' | 'RIDE' | 'SWIM' | 'WALK';
 
@@ -144,12 +145,15 @@ const Dashboard = () => {
                             <h1 className="text-2xl font-bold">Welcome, {user?.username}!</h1>
                             <p className="text-gray-600">{user?.email}</p>
                         </div>
-                        <button
-                            onClick={handleLogout}
-                            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
-                        >
-                            Logout
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <NotificationBell />
+                            <button
+                                onClick={handleLogout}
+                                className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
+                            >
+                                Logout
+                            </button>
+                        </div>
                     </div>
                 </div>
 
