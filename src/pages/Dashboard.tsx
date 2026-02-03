@@ -90,10 +90,8 @@ const Dashboard = () => {
             const res = await api.post(`/api/challenges/${id}/leave`);
 
             if (challenge?.status === 'SCHEDULED') {
-                // For SCHEDULED: participant is removed completely
                 setChallenges(challenges.filter(c => c.id !== id));
             } else {
-                // For ACTIVE: challenge becomes COMPLETED, update in list
                 setChallenges(challenges.map(c => c.id === id ? res.data : c));
             }
             setLeaveId(null);
@@ -190,7 +188,6 @@ const Dashboard = () => {
                                                 className="flex-1 cursor-pointer"
                                                 onClick={() => navigate(`/challenges/${c.id}`)}
                                             >
-                                                {/* Row 1: Sport icons + Challenge name */}
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="text-xl flex gap-1">
                                                         {mySports.map((sport, idx) => (
@@ -202,7 +199,6 @@ const Dashboard = () => {
                                                     </span>
                                                 </div>
 
-                                                {/* Row 2: Participants */}
                                                 <div className="flex items-center gap-2 text-gray-600">
                                                     <span>{getParticipantsDisplay(c)}</span>
                                                     {c.participants.length < 2 && c.status !== 'EXPIRED' && c.status !== 'COMPLETED' && (
@@ -212,13 +208,11 @@ const Dashboard = () => {
                                                     )}
                                                 </div>
 
-                                                {/* Row 3: Dates */}
                                                 <p className="text-gray-500 text-sm mt-1">
                                                     {c.startAt} → {c.endAt}
                                                 </p>
                                             </div>
 
-                                            {/* Right column: Status + Delete/Leave */}
                                             <div className="flex flex-col items-end gap-2 ml-4">
                                                 <span
                                                     className={`px-2 py-1 rounded text-xs w-24 text-center ${
@@ -247,7 +241,6 @@ const Dashboard = () => {
                                                     const isLoser = c.status === 'COMPLETED' && c.winnerId && c.winnerId !== user?.id;
                                                     const isExpired = c.status === 'EXPIRED';
 
-                                                    // Show status icon for completed/forfeited/expired
                                                     if (isExpired) {
                                                         return <span className="text-4xl">⏰</span>;
                                                     }
@@ -264,17 +257,13 @@ const Dashboard = () => {
                                                         return <span className="text-4xl">🤝</span>;
                                                     }
 
-                                                    // Show action buttons for non-completed challenges
                                                     if (isCreator(c)) {
-                                                        // Can delete: PENDING, EXPIRED, COMPLETED
                                                         const canDelete = !hasForfeited &&
                                                             (c.status === 'PENDING' || c.status === 'EXPIRED' || c.status === 'COMPLETED');
 
-                                                        // Can leave (shows message): SCHEDULED with opponent
                                                         const canLeave = !hasForfeited &&
                                                             c.status === 'SCHEDULED' && c.participants.length > 1;
 
-                                                        // Can forfeit: ACTIVE and not already forfeited
                                                         const canForfeit = c.status === 'ACTIVE' && !hasForfeited;
 
                                                         return (
@@ -315,7 +304,6 @@ const Dashboard = () => {
                                                             </div>
                                                         );
                                                     } else {
-                                                        // Opponent: Leave for SCHEDULED, Forfeit for ACTIVE
                                                         if (c.status === 'SCHEDULED') {
                                                             return (
                                                                 <button

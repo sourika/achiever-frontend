@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 
@@ -20,15 +20,31 @@ const NotificationBell = ({ onNewNotification }: Props) => {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const unreadCountRef = useRef(0);
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const fetchUnreadCount = useCallback(async () => {
+        try {
+            const res = await api.get('/api/notifications/unread-count');
+            const newCount = res.data.count;
+            if (newCount > unreadCountRef.current && onNewNotification) {
+                onNewNotification();
+            }
+            unreadCountRef.current = newCount;
+            setUnreadCount(newCount);
+        } catch (err) {
+            console.error('Failed to fetch unread count', err);
+        }
+    }, [onNewNotification]);
+
     // Fetch unread count on mount and every 30 seconds
     useEffect(() => {
-        fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 30000);
+        const run = () => void fetchUnreadCount();
+        run();
+        const interval = setInterval(run, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchUnreadCount]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -40,19 +56,6 @@ const NotificationBell = ({ onNewNotification }: Props) => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    const fetchUnreadCount = async () => {
-        try {
-            const res = await api.get('/api/notifications/unread-count');
-            const newCount = res.data.count;
-            if (newCount > unreadCount && onNewNotification) {
-                onNewNotification();
-            }
-            setUnreadCount(newCount);
-        } catch (err) {
-            console.error('Failed to fetch unread count', err);
-        }
-    };
 
     const fetchNotifications = async () => {
         try {
@@ -73,6 +76,7 @@ const NotificationBell = ({ onNewNotification }: Props) => {
     const handleMarkAllRead = async () => {
         try {
             await api.post('/api/notifications/read');
+            unreadCountRef.current = 0;
             setUnreadCount(0);
             setNotifications(notifications.map(n => ({ ...n, read: true })));
         } catch (err) {
