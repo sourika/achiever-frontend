@@ -47,6 +47,7 @@ const Dashboard = () => {
     const [leaveId, setLeaveId] = useState<string | null>(null);
     const [leaving, setLeaving] = useState(false);
     const [notificationTrigger, setNotificationTrigger] = useState(0);
+    const [creatorLeaveModal, setCreatorLeaveModal] = useState(false);
 
     useEffect(() => {
         Promise.all([
@@ -293,7 +294,7 @@ const Dashboard = () => {
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            alert('Please ask your opponent to leave first. Once they leave, you can delete the challenge.');
+                                                                            setCreatorLeaveModal(true);
                                                                         }}
                                                                         className="text-orange-500 hover:text-orange-700 flex items-center gap-1"
                                                                     >
@@ -377,6 +378,24 @@ const Dashboard = () => {
                                 {deleting ? 'Deleting...' : 'Delete'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Creator Leave Info Modal */}
+            {creatorLeaveModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-bold mb-2">Can't Leave as Creator</h3>
+                        <p className="text-gray-600 mb-4">
+                            Please ask your opponent to leave first. Once they leave, you can delete the challenge.
+                        </p>
+                        <button
+                            onClick={() => setCreatorLeaveModal(false)}
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded"
+                        >
+                            OK
+                        </button>
                     </div>
                 </div>
             )}
