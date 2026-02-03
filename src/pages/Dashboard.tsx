@@ -46,6 +46,7 @@ const Dashboard = () => {
     const [deleting, setDeleting] = useState(false);
     const [leaveId, setLeaveId] = useState<string | null>(null);
     const [leaving, setLeaving] = useState(false);
+    const [notificationTrigger, setNotificationTrigger] = useState(0);
 
     useEffect(() => {
         Promise.all([
@@ -61,7 +62,7 @@ const Dashboard = () => {
                 window.location.href = '/';
             })
             .finally(() => setLoading(false));
-    }, []);
+    }, [notificationTrigger]);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -146,7 +147,7 @@ const Dashboard = () => {
                             <p className="text-gray-600">{user?.email}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <NotificationBell />
+                            <NotificationBell onNewNotification={() => setNotificationTrigger(n => n + 1)} />
                             <button
                                 onClick={handleLogout}
                                 className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"

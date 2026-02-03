@@ -12,7 +12,11 @@ interface Notification {
     createdAt: string;
 }
 
-const NotificationBell = () => {
+interface Props {
+    onNewNotification?: () => void;
+}
+
+const NotificationBell = ({ onNewNotification }: Props) => {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -40,7 +44,11 @@ const NotificationBell = () => {
     const fetchUnreadCount = async () => {
         try {
             const res = await api.get('/api/notifications/unread-count');
-            setUnreadCount(res.data.count);
+            const newCount = res.data.count;
+            if (newCount > unreadCount && onNewNotification) {
+                onNewNotification();
+            }
+            setUnreadCount(newCount);
         } catch (err) {
             console.error('Failed to fetch unread count', err);
         }
