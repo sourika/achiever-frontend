@@ -59,12 +59,10 @@ const Home = () => {
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{ backgroundImage: "url('/photo_background.jpeg')" }}
                 />
-                {/* Dark overlay for readability */}
-                <div className="absolute inset-0 bg-navy-950/50" />
 
-                {/* Sign-in card — original dark style */}
+                {/* Sign-in card — fully opaque */}
                 <div className="max-w-md w-full relative z-10">
-                    <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
+                    <div className="bg-navy-800 border border-navy-600/40 rounded-2xl card-glow p-8">
                         <div className="text-center mb-8">
                             <h1 className="font-display font-bold text-4xl text-white mb-2">
                                 <span className="text-accent">A</span>chiever
