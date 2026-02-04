@@ -3,7 +3,8 @@ const GetStarted = () => {
 
     const handleConnectStrava = () => {
         localStorage.removeItem('token');
-        window.location.href = apiUrl + '/api/auth/strava?prompt=consent';
+        const pendingEmail = localStorage.getItem('pendingEmail') || '';
+        window.location.href = apiUrl + '/api/auth/strava?prompt=consent&email=' + encodeURIComponent(pendingEmail);
     };
 
     return (
@@ -14,7 +15,7 @@ const GetStarted = () => {
 
                 <button
                     onClick={handleConnectStrava}
-                    className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                    className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold
                                px-6 py-3 rounded-xl transition-all hover:shadow-lg hover:shadow-accent/20"
                 >
                     Connect with Strava
