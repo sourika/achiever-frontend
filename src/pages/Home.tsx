@@ -57,7 +57,7 @@ const Home = () => {
                 {/* Background photo */}
                 <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{ backgroundImage: "url('/impresjonistyczne4.jpg')" }}
+                    style={{ backgroundImage: "url('/run.jpg')" }}
                 />
 
                 {/* Sign-in card — fully opaque */}
