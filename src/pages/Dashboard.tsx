@@ -102,7 +102,7 @@ const CountdownDisplay = ({ label, targetDate, isEnd = false }: { label: string;
     if (countdown.expired) return null;
 
     return (
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center justify-center gap-2 mt-2">
             <span className="text-navy-300 text-xs font-medium uppercase tracking-wider">{label}</span>
             <div className="flex items-center gap-1">
                 <span className="font-mono text-sm font-semibold text-white bg-navy-700/80 px-2 py-0.5 rounded">
@@ -132,26 +132,33 @@ const VsProgressBar = ({
     leftColor: string;
     rightColor: string;
 }) => {
-    const total = leftPercent + rightPercent;
-    const leftWidth = total === 0 ? 50 : (leftPercent / total) * 100;
-    const rightWidth = 100 - leftWidth;
+    const leftFill = Math.min(leftPercent, 100);
+    const rightFill = Math.min(rightPercent, 100);
 
     return (
         <div className="w-full h-2 rounded-full overflow-hidden flex progress-bar-track">
-            <div
-                className="h-full transition-all duration-700 ease-out"
-                style={{
-                    width: `${leftWidth}%`,
-                    background: `linear-gradient(90deg, ${leftColor} 0%, ${leftColor}cc 100%)`,
-                }}
-            />
-            <div
-                className="h-full transition-all duration-700 ease-out"
-                style={{
-                    width: `${rightWidth}%`,
-                    background: `linear-gradient(90deg, ${rightColor}cc 0%, ${rightColor} 100%)`,
-                }}
-            />
+            {/* Left half */}
+            <div className="w-1/2 h-full flex justify-end relative">
+                <div className="absolute inset-0" />
+                <div
+                    className="absolute left-0 top-0 h-full transition-all duration-700 ease-out rounded-l-full"
+                    style={{
+                        width: `${leftFill}%`,
+                        background: `linear-gradient(90deg, ${leftColor} 0%, ${leftColor}cc 100%)`,
+                    }}
+                />
+            </div>
+            {/* Right half */}
+            <div className="w-1/2 h-full relative">
+                <div className="absolute inset-0" />
+                <div
+                    className="absolute right-0 top-0 h-full transition-all duration-700 ease-out rounded-r-full"
+                    style={{
+                        width: `${rightFill}%`,
+                        background: `linear-gradient(90deg, ${rightColor}cc 0%, ${rightColor} 100%)`,
+                    }}
+                />
+            </div>
         </div>
     );
 };
@@ -274,6 +281,11 @@ const ChallengeCard = ({
                 <CountdownDisplay label="Expires in:" targetDate={challenge.endAt} isEnd />
             )}
 
+            {/* Countdown for ACTIVE */}
+            {challenge.status === 'ACTIVE' && (
+                <CountdownDisplay label="Ends in:" targetDate={challenge.endAt} isEnd />
+            )}
+
             {/* Participants + Progress Bar */}
             {(challenge.status === 'ACTIVE' || challenge.status === 'COMPLETED') && (
                 <div className="mt-3">
@@ -371,7 +383,7 @@ const ChallengeCard = ({
 
             {/* EXPIRED - no opponent */}
             {challenge.status === 'EXPIRED' && (
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex items-center justify-center">
                     <span className="text-gray-500 text-sm">No opponent joined</span>
                 </div>
             )}
