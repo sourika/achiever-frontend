@@ -45,6 +45,11 @@ interface User {
     username: string;
 }
 
+const formatDate = (dateStr: string): string => {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 const ChallengeDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -54,17 +59,11 @@ const ChallengeDetail = () => {
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [copied, setCopied] = useState(false);
-
-    // Edit name state
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState('');
     const [saving, setSaving] = useState(false);
-
-    // Delete state
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
-
-    // Leave state
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [leaving, setLeaving] = useState(false);
 
@@ -86,7 +85,6 @@ const ChallengeDetail = () => {
                 setLoading(false);
             }
         };
-
         void loadChallenge();
     }, [id, navigate]);
 
@@ -136,7 +134,6 @@ const ChallengeDetail = () => {
         setLeaving(true);
         try {
             await api.post(`/api/challenges/${id}/leave`);
-            // Reload challenge to see updated status
             const [challengeRes, progressRes] = await Promise.all([
                 api.get(`/api/challenges/${id}`),
                 api.get(`/api/challenges/${id}/progress`),
@@ -152,16 +149,15 @@ const ChallengeDetail = () => {
     };
 
     const isCreator = user && challenge && user.id === challenge.createdBy.id;
-
-    // Check if current user has forfeited
-    const currentUserForfeited = user && challenge?.participants.find(
-        p => p.userId === user.id
-    )?.forfeitedAt;
+    const currentUserForfeited = user && challenge?.participants.find(p => p.userId === user.id)?.forfeitedAt;
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                Loading...
+            <div className="min-h-screen flex items-center justify-center bg-navy-950">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    <span className="text-navy-400 text-sm font-body">Loading...</span>
+                </div>
             </div>
         );
     }
@@ -176,63 +172,60 @@ const ChallengeDetail = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div className="min-h-screen bg-navy-950 p-4 sm:p-8">
             <div className="max-w-2xl mx-auto">
                 <button
                     onClick={() => navigate('/dashboard')}
-                    className="text-gray-500 hover:text-gray-700 mb-4"
+                    className="text-navy-400 hover:text-navy-200 mb-4 text-sm font-body"
                 >
                     ← Back to Dashboard
                 </button>
 
                 {/* User forfeited banner */}
                 {currentUserForfeited && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                        <p className="text-red-800 font-medium text-center text-lg">
-                            <span className="text-4xl">😔</span><br />You forfeited this challenge
+                    <div className="bg-red-950/30 border border-red-500/30 rounded-xl p-4 mb-6">
+                        <p className="text-red-400 font-medium text-center text-lg font-display">
+                            You forfeited this challenge
                         </p>
                     </div>
                 )}
 
-                {/* Challenge completed - show winner */}
+                {/* Challenge completed - winner */}
                 {challenge.status === 'COMPLETED' && challenge.winnerId && !currentUserForfeited && (
-                    <div className={`border rounded-lg p-4 mb-6 ${
+                    <div className={`border rounded-xl p-6 mb-6 text-center ${
                         challenge.winnerId === user?.id
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-gray-50 border-gray-200'
+                            ? 'bg-emerald-950/30 border-emerald-500/30'
+                            : 'bg-red-950/20 border-red-500/20'
                     }`}>
-                        <p className={`font-medium text-center text-lg ${
-                            challenge.winnerId === user?.id
-                                ? 'text-green-800'
-                                : 'text-gray-800'
+                        <p className={`font-display font-bold text-2xl ${
+                            challenge.winnerId === user?.id ? 'text-emerald-400' : 'text-red-400'
                         }`}>
                             {challenge.winnerId === user?.id
-                                ? <><span className="text-5xl">🏆</span><br />Congratulations! You won!</>
-                                : <><span className="text-5xl">🏁</span><br />Challenge ended. Winner: {challenge.participants.find(p => p.userId === challenge.winnerId)?.username}</>
+                                ? '🏆 VICTORY!'
+                                : `🏁 DEFEAT — Winner: ${challenge.participants.find(p => p.userId === challenge.winnerId)?.username}`
                             }
                         </p>
                     </div>
                 )}
 
-                {/* Challenge completed - tie (only if no forfeit involved) */}
+                {/* Tie */}
                 {challenge.status === 'COMPLETED' && !challenge.winnerId && !challenge.participants.some(p => p.forfeitedAt) && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <p className="text-blue-800 font-medium text-center text-lg">
-                            <span className="text-5xl">🤝</span><br />It's a tie!
-                        </p>
+                    <div className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-6 mb-6 text-center">
+                        <p className="text-amber-400 font-display font-bold text-2xl">🤝 DRAW!</p>
                     </div>
                 )}
 
-                {/* Challenge expired - no opponent joined */}
+                {/* Expired */}
                 {challenge.status === 'EXPIRED' && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-                        <p className="text-gray-600 font-medium text-center text-lg">
-                            <span className="text-4xl">⏰</span><br />Challenge expired — no opponent joined in time
+                    <div className="bg-gray-900/30 border border-gray-600/30 rounded-xl p-4 mb-6 text-center">
+                        <p className="text-gray-500 font-display font-medium">
+                            Challenge expired — no opponent joined in time
                         </p>
                     </div>
                 )}
 
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                {/* Challenge info card */}
+                <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-6 mb-6">
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
                             {/* Editable name */}
@@ -244,146 +237,119 @@ const ChallengeDetail = () => {
                                         onChange={(e) => setEditName(e.target.value.slice(0, 50))}
                                         placeholder="Challenge name"
                                         maxLength={50}
-                                        className="text-2xl font-bold border border-gray-300 rounded px-2 py-1 flex-1"
+                                        className="font-display font-bold text-2xl bg-navy-900/80 border border-navy-600/50 text-white
+                                                   rounded-lg px-2 py-1 flex-1 focus:outline-none focus:ring-2 focus:ring-accent/50"
                                         autoFocus
                                     />
-                                    <button
-                                        onClick={handleSaveName}
-                                        disabled={saving}
-                                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
-                                    >
+                                    <button onClick={handleSaveName} disabled={saving}
+                                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg text-sm disabled:opacity-50">
                                         {saving ? '...' : '✓'}
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            setIsEditing(false);
-                                            setEditName(challenge.name || '');
-                                        }}
-                                        className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded text-sm"
-                                    >
+                                    <button onClick={() => { setIsEditing(false); setEditName(challenge.name || ''); }}
+                                        className="bg-navy-700 hover:bg-navy-600 text-navy-300 px-3 py-1 rounded-lg text-sm">
                                         ✕
                                     </button>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2 mb-2">
-                                    <h1 className="text-2xl font-bold">
+                                    <h1 className="font-display font-bold text-2xl text-white">
                                         {challenge.name || 'Challenge'}
                                     </h1>
                                     {isCreator && (
-                                        <button
-                                            onClick={() => setIsEditing(true)}
-                                            className="text-gray-400 hover:text-gray-600 text-sm"
-                                            title="Edit name"
-                                        >
+                                        <button onClick={() => setIsEditing(true)}
+                                            className="text-navy-500 hover:text-navy-300 text-sm" title="Edit name">
                                             ✏️
                                         </button>
                                     )}
                                 </div>
                             )}
-                            <p className="text-gray-600">
-                                {challenge.startAt} → {challenge.endAt}
-                            </p>
+
+                            {/* Date */}
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <svg className="w-4 h-4 text-navy-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-navy-300 text-sm font-body">
+                                    {formatDate(challenge.startAt)} – {formatDate(challenge.endAt)}
+                                </span>
+                            </div>
+
+                            {/* Sport tags */}
                             <div className="flex flex-wrap gap-2 mt-2">
                                 {Object.keys(
                                     challenge.participants.find(p => p.userId === user?.id)?.goals || {}
                                 ).map(sport => {
                                     const sportType = sport as SportType;
                                     return (
-                                        <span
-                                            key={sport}
-                                            className="bg-gray-100 px-2 py-1 rounded text-sm"
-                                        >
+                                        <span key={sport}
+                                            className="bg-navy-700/50 border border-navy-600/40 px-2.5 py-1 rounded-lg text-sm text-navy-200 font-body">
                                             {sportConfig[sportType]?.emoji} {sportConfig[sportType]?.label}
                                         </span>
                                     );
                                 })}
                             </div>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                            <span
-                                className={`px-3 py-1 rounded-full text-sm ${
-                                    challenge.status === 'ACTIVE'
-                                        ? 'bg-green-100 text-green-800'
-                                        : challenge.status === 'PENDING'
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : challenge.status === 'SCHEDULED'
-                                                ? 'bg-purple-100 text-purple-800'
-                                                : challenge.status === 'COMPLETED'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : challenge.status === 'EXPIRED'
-                                                        ? 'bg-gray-100 text-gray-500'
-                                                        : challenge.status === 'CANCELLED'
-                                                            ? 'bg-red-100 text-red-800'
-                                                            : 'bg-gray-100 text-gray-800'
-                                }`}
-                            >
+
+                        {/* Status + Actions */}
+                        <div className="flex flex-col items-end gap-2 ml-4">
+                            <span className={`font-display font-bold text-xs uppercase tracking-widest px-3 py-1 rounded-lg ${
+                                challenge.status === 'ACTIVE' ? 'bg-accent/10 text-accent-light' :
+                                challenge.status === 'PENDING' ? 'bg-sky-500/10 text-sky-400' :
+                                challenge.status === 'SCHEDULED' ? 'bg-violet-500/10 text-violet-400' :
+                                challenge.status === 'COMPLETED' ? 'bg-navy-700/50 text-navy-300' :
+                                challenge.status === 'EXPIRED' ? 'bg-gray-800/50 text-gray-500' :
+                                challenge.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400' :
+                                'bg-navy-700/50 text-navy-400'
+                            }`}>
                                 {challenge.status}
                             </span>
-                            {/* Creator can delete: PENDING, EXPIRED, COMPLETED */}
-                            {isCreator &&
-                                (challenge.status === 'PENDING' || challenge.status === 'EXPIRED' || challenge.status === 'COMPLETED') && (
-                                    <button
-                                        onClick={() => setShowDeleteConfirm(true)}
-                                        className="text-red-500 hover:text-red-700 text-lg flex items-center gap-1"
-                                    >
-                                        <span className="text-3xl">🗑️</span> Delete
-                                    </button>
-                                )}
-                            {/* Creator wants to leave SCHEDULED - show message */}
+
+                            {/* Creator actions */}
+                            {isCreator && (challenge.status === 'PENDING' || challenge.status === 'EXPIRED' || challenge.status === 'COMPLETED') && (
+                                <button onClick={() => setShowDeleteConfirm(true)}
+                                    className="text-red-400 hover:text-red-300 text-sm flex items-center gap-1 font-body">
+                                    🗑️ Delete
+                                </button>
+                            )}
                             {isCreator && !currentUserForfeited && challenge.status === 'SCHEDULED' && challenge.participants.length > 1 && (
                                 <button
                                     onClick={() => alert('Please ask your opponent to leave first. Once they leave, you can delete the challenge.')}
-                                    className="text-orange-500 hover:text-orange-700 text-lg flex items-center gap-1"
-                                >
-                                    <span className="text-3xl">🚪</span> Leave
+                                    className="text-accent hover:text-accent-light text-sm flex items-center gap-1 font-body">
+                                    🚪 Leave
                                 </button>
                             )}
-                            {/* Opponent can leave SCHEDULED */}
                             {!isCreator && !currentUserForfeited && challenge.status === 'SCHEDULED' && (
-                                <button
-                                    onClick={() => setShowLeaveConfirm(true)}
-                                    className="text-orange-500 hover:text-orange-700 text-lg flex items-center gap-1"
-                                >
-                                    <span className="text-3xl">🚪</span> Leave
+                                <button onClick={() => setShowLeaveConfirm(true)}
+                                    className="text-accent hover:text-accent-light text-sm flex items-center gap-1 font-body">
+                                    🚪 Leave
                                 </button>
                             )}
-                            {/* Opponent can forfeit ACTIVE */}
-                            {!isCreator && !currentUserForfeited && challenge.status === 'ACTIVE' && (
-                                <button
-                                    onClick={() => setShowLeaveConfirm(true)}
-                                    className="text-red-500 hover:text-red-700 text-lg flex items-center gap-1"
-                                >
-                                    <span className="text-3xl">🏳️</span> Forfeit
-                                </button>
-                            )}
-                            {/* Creator can forfeit only in ACTIVE status */}
-                            {isCreator && !currentUserForfeited && challenge.status === 'ACTIVE' && (
-                                <button
-                                    onClick={() => setShowLeaveConfirm(true)}
-                                    className="text-red-500 hover:text-red-700 text-lg flex items-center gap-1"
-                                >
-                                    <span className="text-3xl">🏳️</span> Forfeit
+                            {!currentUserForfeited && challenge.status === 'ACTIVE' && (
+                                <button onClick={() => setShowLeaveConfirm(true)}
+                                    className="text-red-400 hover:text-red-300 text-sm flex items-center gap-1 font-body">
+                                    🏳️ Forfeit
                                 </button>
                             )}
                         </div>
                     </div>
 
+                    {/* Pending - invite link */}
                     {challenge.participants.length < 2 && challenge.status !== 'EXPIRED' && (
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-                            <p className="text-orange-800 font-medium">
+                        <div className="bg-accent/5 border border-accent/20 rounded-xl p-4 mt-4">
+                            <p className="text-accent-light font-medium font-body mb-2">
                                 Waiting for opponent to join
                             </p>
-                            <div className="flex items-center mt-2">
+                            <div className="flex items-center">
                                 <input
                                     type="text"
                                     readOnly
                                     value={`${window.location.origin}/join/${challenge.inviteCode}`}
-                                    className="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 text-sm bg-gray-50"
+                                    className="flex-1 bg-navy-900/80 border border-navy-600/50 text-navy-300 
+                                               rounded-l-xl px-3 py-2 text-sm font-mono focus:outline-none"
                                 />
-                                <button
-                                    onClick={copyInviteLink}
-                                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-r-lg text-sm"
-                                >
+                                <button onClick={copyInviteLink}
+                                    className="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-r-xl text-sm font-display font-semibold transition-all">
                                     {copied ? 'Copied!' : 'Copy'}
                                 </button>
                             </div>
@@ -391,15 +357,14 @@ const ChallengeDetail = () => {
                     )}
                 </div>
 
-                <div className="bg-white rounded-lg shadow-md p-6">
+                {/* Progress Section */}
+                <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-6">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold">Progress</h2>
+                        <h2 className="font-display font-bold text-xl text-white">Progress</h2>
                         {challenge.status === 'ACTIVE' && (
-                            <button
-                                onClick={handleSync}
-                                disabled={syncing}
-                                className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded text-sm disabled:opacity-50"
-                            >
+                            <button onClick={handleSync} disabled={syncing}
+                                className="bg-navy-700 hover:bg-navy-600 text-navy-200 px-4 py-2 rounded-xl text-sm 
+                                           font-body disabled:opacity-50 transition-colors">
                                 {syncing ? 'Syncing...' : '🔄 Sync Strava'}
                             </button>
                         )}
@@ -411,26 +376,34 @@ const ChallengeDetail = () => {
                         )?.forfeitedAt;
 
                         return (
-                            <div key={p.userId} className={`mb-6 last:mb-0 border-b border-gray-100 pb-6 last:border-0 ${participantForfeited ? 'opacity-50' : ''}`}>
+                            <div key={p.userId}
+                                className={`mb-6 last:mb-0 border-b border-navy-700/30 pb-6 last:border-0 ${
+                                    participantForfeited ? 'opacity-40' : ''
+                                }`}>
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="font-bold text-lg">
+                                    <span className="font-display font-bold text-lg text-white">
                                         {p.username}
                                         {participantForfeited && (
-                                            <span className="text-red-500 text-sm ml-2">(forfeited)</span>
+                                            <span className="text-red-400 text-sm ml-2 font-body">(forfeited)</span>
                                         )}
                                     </span>
-                                    <span className="text-lg font-medium text-orange-600">
-                                        {p.overallProgressPercent}% overall
+                                    <span className="text-lg font-mono font-semibold text-accent">
+                                        {p.overallProgressPercent}%
                                     </span>
                                 </div>
 
-                                <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                                {/* Overall progress bar */}
+                                <div className="w-full bg-navy-700/50 rounded-full h-3 mb-4 overflow-hidden">
                                     <div
-                                        className="bg-orange-500 h-3 rounded-full transition-all"
-                                        style={{ width: `${Math.min(p.overallProgressPercent, 100)}%` }}
+                                        className="h-3 rounded-full transition-all duration-700 ease-out"
+                                        style={{
+                                            width: `${Math.min(p.overallProgressPercent, 100)}%`,
+                                            background: 'linear-gradient(90deg, #e8842a, #f59640)',
+                                        }}
                                     />
                                 </div>
 
+                                {/* Per-sport breakdown */}
                                 <div className="space-y-2">
                                     {Object.keys(p.goals || {}).map((sport) => {
                                         const sportType = sport as SportType;
@@ -440,19 +413,22 @@ const ChallengeDetail = () => {
                                         const config = sportConfig[sportType];
 
                                         return (
-                                            <div key={sport} className="bg-gray-50 rounded-lg p-3">
+                                            <div key={sport} className="bg-navy-900/40 border border-navy-700/20 rounded-xl p-3">
                                                 <div className="flex justify-between text-sm mb-1">
-                                                    <span>
+                                                    <span className="text-navy-200 font-body">
                                                         {config?.emoji} {config?.label}
                                                     </span>
-                                                    <span className="text-gray-600">
+                                                    <span className="text-navy-400 font-mono text-xs">
                                                         {(distanceMeters / 1000).toFixed(1)} / {goalKm} km ({percent}%)
                                                     </span>
                                                 </div>
-                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div className="w-full bg-navy-700/40 rounded-full h-2 overflow-hidden">
                                                     <div
-                                                        className="bg-blue-400 h-2 rounded-full transition-all"
-                                                        style={{ width: `${Math.min(percent, 100)}%` }}
+                                                        className="h-2 rounded-full transition-all duration-500"
+                                                        style={{
+                                                            width: `${Math.min(percent, 100)}%`,
+                                                            background: 'linear-gradient(90deg, #3a5a8a, #5a7eb0)',
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -464,31 +440,26 @@ const ChallengeDetail = () => {
                     })}
 
                     {(!progress?.participants || progress.participants.length === 0) && (
-                        <p className="text-gray-500">No progress yet.</p>
+                        <p className="text-navy-500 font-body">No progress yet.</p>
                     )}
                 </div>
             </div>
 
-            {/* Delete Confirmation Modal */}
+            {/* Delete Modal */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                        <h3 className="text-lg font-bold mb-2">Delete Challenge?</h3>
-                        <p className="text-gray-600 mb-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-navy-800 border border-navy-600/50 rounded-2xl p-6 max-w-sm w-full card-glow">
+                        <h3 className="font-display font-bold text-lg text-white mb-2">Delete Challenge?</h3>
+                        <p className="text-navy-300 mb-4 font-body">
                             This action cannot be undone. All progress data will be lost.
                         </p>
                         <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
-                            >
+                            <button onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1 bg-navy-700 hover:bg-navy-600 text-navy-200 py-2 rounded-xl font-body transition-colors">
                                 Cancel
                             </button>
-                            <button
-                                onClick={handleDelete}
-                                disabled={deleting}
-                                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
-                            >
+                            <button onClick={handleDelete} disabled={deleting}
+                                className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2 rounded-xl font-body disabled:opacity-50 transition-colors">
                                 {deleting ? 'Deleting...' : 'Delete'}
                             </button>
                         </div>
@@ -496,27 +467,21 @@ const ChallengeDetail = () => {
                 </div>
             )}
 
-            {/* Leave Confirmation Modal - SCHEDULED (no consequences) - only for opponent */}
+            {/* Leave Modal - SCHEDULED */}
             {showLeaveConfirm && challenge.status === 'SCHEDULED' && !isCreator && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                        <h3 className="text-lg font-bold mb-2">Leave Challenge?</h3>
-                        <p className="text-gray-600 mb-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-navy-800 border border-navy-600/50 rounded-2xl p-6 max-w-sm w-full card-glow">
+                        <h3 className="font-display font-bold text-lg text-white mb-2">Leave Challenge?</h3>
+                        <p className="text-navy-300 mb-4 font-body">
                             The challenge hasn't started yet. You can leave without any consequences.
-                            The challenge will return to waiting for an opponent.
                         </p>
                         <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowLeaveConfirm(false)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
-                            >
+                            <button onClick={() => setShowLeaveConfirm(false)}
+                                className="flex-1 bg-navy-700 hover:bg-navy-600 text-navy-200 py-2 rounded-xl font-body transition-colors">
                                 Cancel
                             </button>
-                            <button
-                                onClick={handleLeave}
-                                disabled={leaving}
-                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded disabled:opacity-50"
-                            >
+                            <button onClick={handleLeave} disabled={leaving}
+                                className="flex-1 bg-accent hover:bg-accent-hover text-white py-2 rounded-xl font-body disabled:opacity-50 transition-colors">
                                 {leaving ? 'Leaving...' : 'Leave'}
                             </button>
                         </div>
@@ -524,26 +489,21 @@ const ChallengeDetail = () => {
                 </div>
             )}
 
-            {/* Forfeit Confirmation Modal - ACTIVE */}
+            {/* Forfeit Modal - ACTIVE */}
             {showLeaveConfirm && challenge.status === 'ACTIVE' && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                        <h3 className="text-lg font-bold mb-2">Forfeit Challenge?</h3>
-                        <p className="text-gray-600 mb-4">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-navy-800 border border-navy-600/50 rounded-2xl p-6 max-w-sm w-full card-glow">
+                        <h3 className="font-display font-bold text-lg text-white mb-2">Forfeit Challenge?</h3>
+                        <p className="text-navy-300 mb-4 font-body">
                             If you forfeit, your opponent will win and the challenge will end immediately. This action cannot be undone.
                         </p>
                         <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowLeaveConfirm(false)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
-                            >
+                            <button onClick={() => setShowLeaveConfirm(false)}
+                                className="flex-1 bg-navy-700 hover:bg-navy-600 text-navy-200 py-2 rounded-xl font-body transition-colors">
                                 Cancel
                             </button>
-                            <button
-                                onClick={handleLeave}
-                                disabled={leaving}
-                                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
-                            >
+                            <button onClick={handleLeave} disabled={leaving}
+                                className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2 rounded-xl font-body disabled:opacity-50 transition-colors">
                                 {leaving ? 'Forfeiting...' : 'Forfeit'}
                             </button>
                         </div>

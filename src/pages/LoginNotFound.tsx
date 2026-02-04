@@ -12,31 +12,24 @@ const LoginNotFound = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4">
             <div className="max-w-md w-full">
-                <div className="bg-white rounded-lg shadow-md p-8">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="text-gray-500 hover:text-gray-700 mb-4"
-                    >
+                <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
+                    <button onClick={() => navigate('/')} className="text-navy-400 hover:text-navy-200 mb-4 text-sm font-body">
                         ← Back
                     </button>
-
-                    <h2 className="text-xl font-semibold text-red-600 mb-2">
-                        Email not found
-                    </h2>
-                    <p className="text-gray-600 mb-6">
-                        The email <strong>{email}</strong> is not associated with an Achiever account.
+                    <h2 className="font-display font-semibold text-xl text-red-400 mb-2">Email not found</h2>
+                    <p className="text-navy-300 mb-6 font-body">
+                        The email <strong className="text-white">{email}</strong> is not associated with an Achiever account.
                     </p>
-
                     <button
                         onClick={handleCreateAccount}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg"
+                        className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                                   py-3 rounded-xl transition-all hover:shadow-lg hover:shadow-accent/20"
                     >
                         Create account
                     </button>
-
-                    <p className="text-center text-gray-500 text-sm mt-4">
+                    <p className="text-center text-navy-500 text-sm mt-4 font-body">
                         You'll connect with Strava to create your account
                     </p>
                 </div>

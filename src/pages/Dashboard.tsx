@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import NotificationBell from '../components/NotificationBell';
@@ -31,23 +31,386 @@ interface Challenge {
     winnerId?: string;
 }
 
-const SPORT_ORDER: SportType[] = ['RUN', 'RIDE', 'SWIM', 'WALK'];
+interface ParticipantProgress {
+    userId: string;
+    username: string;
+    overallProgressPercent: number;
+}
 
-const sortSports = (sports: SportType[]): SportType[] => {
-    return [...sports].sort((a, b) => SPORT_ORDER.indexOf(a) - SPORT_ORDER.indexOf(b));
+interface Progress {
+    challengeId: string;
+    participants: ParticipantProgress[];
+}
+
+// ─── Helpers ──────────────────────────────────────────────
+
+const STATUS_ORDER: Record<string, number> = {
+    PENDING: 0,
+    ACTIVE: 1,
+    SCHEDULED: 2,
+    COMPLETED: 3,
+    EXPIRED: 4,
+    CANCELLED: 5,
 };
+
+const sortChallenges = (challenges: Challenge[]): Challenge[] => {
+    return [...challenges].sort(
+        (a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99)
+    );
+};
+
+const formatDate = (dateStr: string): string => {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const getCountdown = (targetDate: string, isEnd = false): { days: number; hours: number; minutes: number; expired: boolean } => {
+    const target = isEnd
+        ? new Date(targetDate + 'T23:59:59')
+        : new Date(targetDate + 'T00:00:00');
+    const now = new Date();
+    const diff = target.getTime() - now.getTime();
+
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, expired: true };
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    return { days, hours, minutes, expired: false };
+};
+
+const sportEmojis: Record<string, string> = {
+    RUN: '🏃',
+    RIDE: '🚴',
+    SWIM: '🏊',
+    WALK: '🚶',
+};
+
+// ─── Countdown Display Component ──────────────────────────
+
+const CountdownDisplay = ({ label, targetDate, isEnd = false }: { label: string; targetDate: string; isEnd?: boolean }) => {
+    const [countdown, setCountdown] = useState(getCountdown(targetDate, isEnd));
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCountdown(getCountdown(targetDate, isEnd));
+        }, 60000);
+        return () => clearInterval(interval);
+    }, [targetDate, isEnd]);
+
+    if (countdown.expired) return null;
+
+    return (
+        <div className="flex items-center gap-2 mt-2">
+            <span className="text-navy-300 text-xs font-medium uppercase tracking-wider">{label}</span>
+            <div className="flex items-center gap-1">
+                <span className="font-mono text-sm font-semibold text-white bg-navy-700/80 px-2 py-0.5 rounded">
+                    {countdown.days}d
+                </span>
+                <span className="font-mono text-sm font-semibold text-white bg-navy-700/80 px-2 py-0.5 rounded">
+                    {countdown.hours}h
+                </span>
+                <span className="font-mono text-sm font-semibold text-white bg-navy-700/80 px-2 py-0.5 rounded">
+                    {countdown.minutes}m
+                </span>
+            </div>
+        </div>
+    );
+};
+
+// ─── VS Progress Bar Component ────────────────────────────
+
+const VsProgressBar = ({
+    leftPercent,
+    rightPercent,
+    leftColor,
+    rightColor,
+}: {
+    leftPercent: number;
+    rightPercent: number;
+    leftColor: string;
+    rightColor: string;
+}) => {
+    const total = leftPercent + rightPercent;
+    const leftWidth = total === 0 ? 50 : (leftPercent / total) * 100;
+    const rightWidth = 100 - leftWidth;
+
+    return (
+        <div className="w-full h-2 rounded-full overflow-hidden flex progress-bar-track">
+            <div
+                className="h-full transition-all duration-700 ease-out"
+                style={{
+                    width: `${leftWidth}%`,
+                    background: `linear-gradient(90deg, ${leftColor} 0%, ${leftColor}cc 100%)`,
+                }}
+            />
+            <div
+                className="h-full transition-all duration-700 ease-out"
+                style={{
+                    width: `${rightWidth}%`,
+                    background: `linear-gradient(90deg, ${rightColor}cc 0%, ${rightColor} 100%)`,
+                }}
+            />
+        </div>
+    );
+};
+
+// ─── Challenge Card Component ─────────────────────────────
+
+const ChallengeCard = ({
+    challenge,
+    user,
+    progressMap,
+    onClick,
+}: {
+    challenge: Challenge;
+    user: User;
+    progressMap: Record<string, Progress>;
+    onClick: () => void;
+}) => {
+    const me = challenge.participants.find(p => p.userId === user.id);
+    const opponent = challenge.participants.find(p => p.userId !== user.id);
+    const progress = progressMap[challenge.id];
+
+    const myProgress = progress?.participants.find(p => p.userId === user.id)?.overallProgressPercent ?? 0;
+    const opponentProgress = progress?.participants.find(p => p.userId !== user.id)?.overallProgressPercent ?? 0;
+
+    // Determine result for COMPLETED challenges
+    const isWinner = challenge.status === 'COMPLETED' && challenge.winnerId === user.id;
+    const isLoser = challenge.status === 'COMPLETED' && challenge.winnerId && challenge.winnerId !== user.id;
+    const isDraw = challenge.status === 'COMPLETED' && !challenge.winnerId && !challenge.participants.some(p => p.forfeitedAt);
+    const isExpired = challenge.status === 'EXPIRED';
+
+    // Card background/border tint based on status
+    let cardBg = 'bg-navy-800/70';
+    let cardBorder = 'border-navy-600/40';
+    let glowClass = 'card-glow';
+    let statusLabel = challenge.status;
+    let statusColor = 'text-navy-300';
+
+    if (isWinner) {
+        cardBg = 'bg-gradient-to-br from-navy-800/70 to-emerald-950/30';
+        cardBorder = 'border-emerald-500/30';
+        glowClass = 'card-glow-green';
+        statusLabel = 'VICTORY';
+        statusColor = 'text-emerald-400';
+    } else if (isLoser) {
+        cardBg = 'bg-gradient-to-br from-navy-800/70 to-red-950/30';
+        cardBorder = 'border-red-500/30';
+        glowClass = 'card-glow-red';
+        statusLabel = 'DEFEAT';
+        statusColor = 'text-red-400';
+    } else if (isDraw) {
+        cardBg = 'bg-gradient-to-br from-navy-800/70 to-amber-950/20';
+        cardBorder = 'border-amber-500/30';
+        glowClass = 'card-glow-yellow';
+        statusLabel = 'DRAW';
+        statusColor = 'text-amber-400';
+    } else if (isExpired) {
+        cardBg = 'bg-gradient-to-br from-navy-800/50 to-gray-900/30';
+        cardBorder = 'border-gray-600/30';
+        glowClass = 'card-glow-gray';
+        statusLabel = 'EXPIRED';
+        statusColor = 'text-gray-500';
+    } else if (challenge.status === 'ACTIVE') {
+        cardBg = 'bg-gradient-to-br from-navy-800/70 to-navy-700/50';
+        cardBorder = 'border-accent/30';
+        statusColor = 'text-accent-light';
+    } else if (challenge.status === 'SCHEDULED') {
+        cardBg = 'bg-navy-800/60';
+        cardBorder = 'border-violet-500/25';
+        statusColor = 'text-violet-400';
+    } else if (challenge.status === 'PENDING') {
+        cardBg = 'bg-navy-800/60';
+        cardBorder = 'border-sky-500/25';
+        statusColor = 'text-sky-400';
+    }
+
+    const barLeftColor = isWinner ? '#22c55e' : isLoser ? '#ef4444' : '#e8842a';
+    const barRightColor = isWinner ? '#ef4444' : isLoser ? '#22c55e' : '#3a5a8a';
+
+    return (
+        <div
+            onClick={onClick}
+            className={`${cardBg} border ${cardBorder} ${glowClass} rounded-2xl p-5 cursor-pointer 
+                        hover:scale-[1.01] hover:brightness-110 transition-all duration-200`}
+        >
+            {/* Top row: Challenge Name + Status */}
+            <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="flex gap-0.5 text-lg shrink-0">
+                        {challenge.sportTypes.map((s, i) => (
+                            <span key={i}>{sportEmojis[s]}</span>
+                        ))}
+                    </span>
+                    <h3 className="font-display font-semibold text-white truncate">
+                        {challenge.name || 'Challenge'}
+                    </h3>
+                </div>
+                <span className={`font-display font-bold text-xs uppercase tracking-widest ml-3 shrink-0 ${statusColor}`}>
+                    {statusLabel}
+                </span>
+            </div>
+
+            {/* Date row */}
+            <div className="flex items-center gap-1.5 mb-4">
+                <svg className="w-3.5 h-3.5 text-navy-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-navy-300 text-xs font-body">
+                    {formatDate(challenge.startAt)} – {formatDate(challenge.endAt)}
+                </span>
+            </div>
+
+            {/* Countdown for SCHEDULED */}
+            {challenge.status === 'SCHEDULED' && (
+                <CountdownDisplay label="Starts in:" targetDate={challenge.startAt} />
+            )}
+
+            {/* Countdown for PENDING */}
+            {challenge.status === 'PENDING' && (
+                <CountdownDisplay label="Expires in:" targetDate={challenge.endAt} isEnd />
+            )}
+
+            {/* Participants + Progress Bar */}
+            {(challenge.status === 'ACTIVE' || challenge.status === 'COMPLETED') && (
+                <div className="mt-3">
+                    {/* Participants row */}
+                    <div className="flex items-center justify-between mb-2">
+                        {/* Left: current user */}
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center">
+                                <span className="text-accent font-display font-bold text-xs">
+                                    {me?.username?.charAt(0).toUpperCase() || '?'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-white text-sm font-medium leading-tight">{me?.username || 'You'}</p>
+                                {me?.forfeitedAt && (
+                                    <span className="text-red-400 text-[10px]">forfeited</span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Center: scores */}
+                        <div className="flex items-center gap-3 px-4">
+                            <span className="font-mono font-bold text-xl"
+                                style={{ color: barLeftColor }}>
+                                {myProgress}
+                            </span>
+                            <span className="text-navy-500 text-xs font-bold">%</span>
+                            <span className="font-mono font-bold text-xl"
+                                style={{ color: barRightColor }}>
+                                {opponentProgress}
+                            </span>
+                        </div>
+
+                        {/* Right: opponent */}
+                        <div className="flex items-center gap-2">
+                            <div className="text-right">
+                                <p className="text-white text-sm font-medium leading-tight">{opponent?.username || 'Opponent'}</p>
+                                {opponent?.forfeitedAt && (
+                                    <span className="text-red-400 text-[10px]">forfeited</span>
+                                )}
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-navy-600/60 border border-navy-500/40 flex items-center justify-center">
+                                <span className="text-navy-200 font-display font-bold text-xs">
+                                    {opponent?.username?.charAt(0).toUpperCase() || '?'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <VsProgressBar
+                        leftPercent={myProgress}
+                        rightPercent={opponentProgress}
+                        leftColor={barLeftColor}
+                        rightColor={barRightColor}
+                    />
+                </div>
+            )}
+
+            {/* For SCHEDULED/PENDING with participants - show names */}
+            {(challenge.status === 'SCHEDULED' || challenge.status === 'PENDING') && (
+                <div className="mt-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center">
+                            <span className="text-accent font-display font-bold text-[10px]">
+                                {me?.username?.charAt(0).toUpperCase() || '?'}
+                            </span>
+                        </div>
+                        <span className="text-white text-sm">{me?.username || 'You'}</span>
+                    </div>
+
+                    <span className="text-navy-500 text-xs font-display font-bold">VS</span>
+
+                    <div className="flex items-center gap-2">
+                        {opponent ? (
+                            <>
+                                <span className="text-white text-sm">{opponent.username}</span>
+                                <div className="w-7 h-7 rounded-full bg-navy-600/60 border border-navy-500/40 flex items-center justify-center">
+                                    <span className="text-navy-200 font-display font-bold text-[10px]">
+                                        {opponent.username.charAt(0).toUpperCase()}
+                                    </span>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <span className="text-navy-500 text-sm italic">Waiting...</span>
+                                <div className="w-7 h-7 rounded-full bg-navy-700/40 border border-navy-600/30 border-dashed flex items-center justify-center">
+                                    <span className="text-navy-500 text-[10px]">?</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* EXPIRED - no opponent */}
+            {challenge.status === 'EXPIRED' && (
+                <div className="mt-3 flex items-center gap-2">
+                    <span className="text-gray-500 text-sm">No opponent joined</span>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ─── Main Dashboard ───────────────────────────────────────
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState<User | null>(null);
     const [challenges, setChallenges] = useState<Challenge[]>([]);
+    const [progressMap, setProgressMap] = useState<Record<string, Progress>>({});
     const [loading, setLoading] = useState(true);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
-    const [deleting, setDeleting] = useState(false);
-    const [leaveId, setLeaveId] = useState<string | null>(null);
-    const [leaving, setLeaving] = useState(false);
     const [notificationTrigger, setNotificationTrigger] = useState(0);
-    const [creatorLeaveModal, setCreatorLeaveModal] = useState(false);
+
+    const fetchProgress = useCallback(async (challengeList: Challenge[]) => {
+        const activeOrCompleted = challengeList.filter(
+            c => c.status === 'ACTIVE' || c.status === 'COMPLETED'
+        );
+
+        const results = await Promise.allSettled(
+            activeOrCompleted.map(c =>
+                api.get(`/api/challenges/${c.id}/progress`).then(res => ({
+                    id: c.id,
+                    data: res.data as Progress,
+                }))
+            )
+        );
+
+        const map: Record<string, Progress> = {};
+        results.forEach(r => {
+            if (r.status === 'fulfilled') {
+                map[r.value.id] = r.value.data;
+            }
+        });
+        setProgressMap(map);
+    }, []);
 
     useEffect(() => {
         Promise.all([
@@ -56,378 +419,98 @@ const Dashboard = () => {
         ])
             .then(([userRes, challengesRes]) => {
                 setUser(userRes.data);
-                setChallenges(challengesRes.data);
+                const sorted = sortChallenges(challengesRes.data);
+                setChallenges(sorted);
+                void fetchProgress(sorted);
             })
             .catch(() => {
                 localStorage.removeItem('token');
                 window.location.href = '/';
             })
             .finally(() => setLoading(false));
-    }, [notificationTrigger]);
+    }, [notificationTrigger, fetchProgress]);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         window.location.href = '/';
     };
 
-    const handleDelete = async (id: string) => {
-        setDeleting(true);
-        try {
-            await api.delete(`/api/challenges/${id}`);
-            setChallenges(challenges.filter(c => c.id !== id));
-            setDeleteId(null);
-        } catch (err) {
-            console.error('Failed to delete challenge', err);
-        } finally {
-            setDeleting(false);
-        }
-    };
-
-    const handleLeave = async (id: string) => {
-        setLeaving(true);
-        try {
-            const challenge = challenges.find(c => c.id === id);
-            const res = await api.post(`/api/challenges/${id}/leave`);
-
-            if (challenge?.status === 'SCHEDULED') {
-                setChallenges(challenges.filter(c => c.id !== id));
-            } else {
-                setChallenges(challenges.map(c => c.id === id ? res.data : c));
-            }
-            setLeaveId(null);
-        } catch (err) {
-            console.error('Failed to leave challenge', err);
-        } finally {
-            setLeaving(false);
-        }
-    };
-
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                Loading...
+            <div className="min-h-screen flex items-center justify-center bg-navy-950">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    <span className="text-navy-400 text-sm font-body">Loading...</span>
+                </div>
             </div>
         );
     }
 
-    const sportEmojis: Record<string, string> = {
-        RUN: '🏃',
-        RIDE: '🚴',
-        SWIM: '🏊',
-        WALK: '🚶',
-    };
-
-    const getParticipantsDisplay = (challenge: Challenge) => {
-        if (!user) return '';
-
-        const currentUserParticipant = challenge.participants.find(p => p.userId === user.id);
-        const opponent = challenge.participants.find(p => p.userId !== user.id);
-
-        if (currentUserParticipant && opponent) {
-            return `${currentUserParticipant.username} vs ${opponent.username}`;
-        } else if (currentUserParticipant) {
-            return currentUserParticipant.username;
-        }
-
-        return challenge.participants.map(p => p.username).join(' vs ');
-    };
-
-    const isCreator = (challenge: Challenge) => {
-        return user && challenge.createdBy.id === user.id;
-    };
-
     return (
-        <div className="min-h-screen bg-gray-100 p-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h1 className="text-2xl font-bold">Welcome, {user?.username}!</h1>
-                            <p className="text-gray-600">{user?.email}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <NotificationBell onNewNotification={() => setNotificationTrigger(n => n + 1)} />
-                            <button
-                                onClick={handleLogout}
-                                className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
-                            >
-                                Logout
-                            </button>
-                        </div>
+        <div className="min-h-screen bg-navy-950">
+            {/* Header */}
+            <header className="bg-navy-900/80 backdrop-blur-md border-b border-navy-700/50 sticky top-0 z-40">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <h1 className="font-display font-bold text-xl text-white">
+                            <span className="text-accent">A</span>chiever
+                        </h1>
+                        <span className="hidden sm:inline text-navy-500 text-sm">|</span>
+                        <span className="hidden sm:inline text-navy-400 text-sm font-body">
+                            {user?.username}
+                        </span>
                     </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold">Your Challenges</h2>
+                    <div className="flex items-center gap-2">
+                        <NotificationBell onNewNotification={() => setNotificationTrigger(n => n + 1)} />
                         <button
-                            onClick={() => navigate('/challenges/new')}
-                            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded"
+                            onClick={handleLogout}
+                            className="text-navy-400 hover:text-navy-200 text-sm font-body px-3 py-1.5 rounded-lg 
+                                       hover:bg-navy-800/50 transition-colors"
                         >
-                            + New Challenge
-                        </button>
-                    </div>
-
-                    {challenges.length === 0 ? (
-                        <p className="text-gray-500">No challenges yet. Create one!</p>
-                    ) : (
-                        <div className="space-y-3">
-                            {challenges.map((c) => {
-                                const currentParticipant = c.participants.find(p => p.userId === user?.id);
-                                const mySports = currentParticipant?.goals
-                                    ? sortSports(Object.keys(currentParticipant.goals) as SportType[])
-                                    : sortSports(c.sportTypes);
-
-                                return (
-                                    <div
-                                        key={c.id}
-                                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div
-                                                className="flex-1 cursor-pointer"
-                                                onClick={() => navigate(`/challenges/${c.id}`)}
-                                            >
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-xl flex gap-1">
-                                                        {mySports.map((sport, idx) => (
-                                                            <span key={idx}>{sportEmojis[sport] || ''}</span>
-                                                        ))}
-                                                    </span>
-                                                    <span className="font-semibold">
-                                                        {c.name || 'Challenge'}
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex items-center gap-2 text-gray-600">
-                                                    <span>{getParticipantsDisplay(c)}</span>
-                                                    {c.participants.length < 2 && c.status !== 'EXPIRED' && c.status !== 'COMPLETED' && (
-                                                        <span className="text-xs text-gray-400">
-                                                            (waiting for opponent)
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                <p className="text-gray-500 text-sm mt-1">
-                                                    {c.startAt} → {c.endAt}
-                                                </p>
-                                            </div>
-
-                                            <div className="flex flex-col items-end gap-2 ml-4">
-                                                <span
-                                                    className={`px-2 py-1 rounded text-xs w-24 text-center ${
-                                                        c.status === 'ACTIVE'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : c.status === 'PENDING'
-                                                                ? 'bg-yellow-100 text-yellow-800'
-                                                                : c.status === 'SCHEDULED'
-                                                                    ? 'bg-purple-100 text-purple-800'
-                                                                    : c.status === 'COMPLETED'
-                                                                        ? 'bg-blue-100 text-blue-800'
-                                                                        : c.status === 'EXPIRED'
-                                                                            ? 'bg-gray-100 text-gray-500'
-                                                                            : c.status === 'CANCELLED'
-                                                                                ? 'bg-red-100 text-red-800'
-                                                                                : 'bg-gray-100 text-gray-800'
-                                                    }`}
-                                                >
-                                                    {c.status}
-                                                </span>
-                                                {(() => {
-                                                    const currentParticipant = c.participants.find(p => p.userId === user?.id);
-                                                    const hasForfeited = currentParticipant?.forfeitedAt;
-                                                    const isWinner = c.winnerId === user?.id;
-                                                    const isTie = c.status === 'COMPLETED' && !c.winnerId && !c.participants.some(p => p.forfeitedAt);
-                                                    const isLoser = c.status === 'COMPLETED' && c.winnerId && c.winnerId !== user?.id;
-                                                    const isExpired = c.status === 'EXPIRED';
-
-                                                    if (isExpired) {
-                                                        return <span className="text-4xl">⏰</span>;
-                                                    }
-                                                    if (hasForfeited) {
-                                                        return <span className="text-4xl">😔</span>;
-                                                    }
-                                                    if (isWinner) {
-                                                        return <span className="text-4xl">🏆</span>;
-                                                    }
-                                                    if (isLoser) {
-                                                        return <span className="text-4xl">😔</span>;
-                                                    }
-                                                    if (isTie) {
-                                                        return <span className="text-4xl">🤝</span>;
-                                                    }
-
-                                                    if (isCreator(c)) {
-                                                        const canDelete = !hasForfeited &&
-                                                            (c.status === 'PENDING' || c.status === 'EXPIRED' || c.status === 'COMPLETED');
-
-                                                        const canLeave = !hasForfeited &&
-                                                            c.status === 'SCHEDULED' && c.participants.length > 1;
-
-                                                        const canForfeit = c.status === 'ACTIVE' && !hasForfeited;
-
-                                                        return (
-                                                            <div className="flex flex-col items-end gap-1">
-                                                                {canDelete && (
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setDeleteId(c.id);
-                                                                        }}
-                                                                        className="text-red-500 hover:text-red-700 flex items-center gap-1"
-                                                                    >
-                                                                        <span className="text-2xl">🗑️</span> Delete
-                                                                    </button>
-                                                                )}
-                                                                {canLeave && (
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setCreatorLeaveModal(true);
-                                                                        }}
-                                                                        className="text-orange-500 hover:text-orange-700 flex items-center gap-1"
-                                                                    >
-                                                                        <span className="text-2xl">🚪</span> Leave
-                                                                    </button>
-                                                                )}
-                                                                {canForfeit && (
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setLeaveId(c.id);
-                                                                        }}
-                                                                        className="text-red-500 hover:text-red-700 flex items-center gap-1"
-                                                                    >
-                                                                        <span className="text-2xl">🏳️</span> Forfeit
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    } else {
-                                                        if (c.status === 'SCHEDULED') {
-                                                            return (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setLeaveId(c.id);
-                                                                    }}
-                                                                    className="text-orange-500 hover:text-orange-700 flex items-center gap-1"
-                                                                >
-                                                                    <span className="text-2xl">🚪</span> Leave
-                                                                </button>
-                                                            );
-                                                        }
-                                                        if (c.status === 'ACTIVE' && !hasForfeited) {
-                                                            return (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setLeaveId(c.id);
-                                                                    }}
-                                                                    className="text-red-500 hover:text-red-700 flex items-center gap-1"
-                                                                >
-                                                                    <span className="text-2xl">🏳️</span> Forfeit
-                                                                </button>
-                                                            );
-                                                        }
-                                                        return null;
-                                                    }
-                                                })()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Delete Confirmation Modal */}
-            {deleteId && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                        <h3 className="text-lg font-bold mb-2">Delete Challenge?</h3>
-                        <p className="text-gray-600 mb-4">
-                            This action cannot be undone. All progress data will be lost.
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setDeleteId(null)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => handleDelete(deleteId)}
-                                disabled={deleting}
-                                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded disabled:opacity-50"
-                            >
-                                {deleting ? 'Deleting...' : 'Delete'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Creator Leave Info Modal */}
-            {creatorLeaveModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                        <h3 className="text-lg font-bold mb-2">Can't Leave as Creator</h3>
-                        <p className="text-gray-600 mb-4">
-                            Please ask your opponent to leave first. Once they leave, you can delete the challenge.
-                        </p>
-                        <button
-                            onClick={() => setCreatorLeaveModal(false)}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded"
-                        >
-                            OK
+                            Logout
                         </button>
                     </div>
                 </div>
-            )}
+            </header>
 
-            {/* Leave Confirmation Modal */}
-            {leaveId && (() => {
-                const challenge = challenges.find(c => c.id === leaveId);
-                const isScheduled = challenge?.status === 'SCHEDULED';
+            {/* Main Content */}
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+                {/* Title row */}
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="font-display font-bold text-2xl text-white">
+                        Your Challenges
+                    </h2>
+                    <button
+                        onClick={() => navigate('/challenges/new')}
+                        className="bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                                   px-5 py-2.5 rounded-xl text-sm transition-all duration-200
+                                   hover:shadow-lg hover:shadow-accent/20"
+                    >
+                        + New Challenge
+                    </button>
+                </div>
 
-                return (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                            <h3 className="text-lg font-bold mb-2">
-                                {isScheduled ? 'Leave Challenge?' : 'Forfeit Challenge?'}
-                            </h3>
-                            <p className="text-gray-600 mb-4">
-                                {isScheduled
-                                    ? "The challenge hasn't started yet. You can leave without any consequences. The challenge will return to waiting for an opponent."
-                                    : "If you forfeit, your opponent will win and the challenge will end immediately. This action cannot be undone."
-                                }
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setLeaveId(null)}
-                                    className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => handleLeave(leaveId)}
-                                    disabled={leaving}
-                                    className={`flex-1 text-white py-2 rounded disabled:opacity-50 ${
-                                        isScheduled
-                                            ? 'bg-orange-500 hover:bg-orange-600'
-                                            : 'bg-red-500 hover:bg-red-600'
-                                    }`}
-                                >
-                                    {leaving ? 'Leaving...' : (isScheduled ? 'Leave' : 'Forfeit')}
-                                </button>
-                            </div>
-                        </div>
+                {/* Challenge Cards */}
+                {challenges.length === 0 ? (
+                    <div className="text-center py-20">
+                        <div className="text-5xl mb-4">🏁</div>
+                        <p className="text-navy-400 text-lg font-body mb-2">No challenges yet</p>
+                        <p className="text-navy-500 text-sm font-body">Create your first challenge and invite a friend!</p>
                     </div>
-                );
-            })()}
+                ) : (
+                    <div className="grid gap-4">
+                        {challenges.map((c) => (
+                            <ChallengeCard
+                                key={c.id}
+                                challenge={c}
+                                user={user!}
+                                progressMap={progressMap}
+                                onClick={() => navigate(`/challenges/${c.id}`)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </main>
         </div>
     );
 };

@@ -8,7 +8,6 @@ const Home = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Check if already logged in
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -45,15 +44,25 @@ const Home = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-            <div className="max-w-md w-full">
-                <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 -left-32 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
+            </div>
+
+            <div className="max-w-md w-full relative z-10">
+                <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-orange-500 mb-2">Achiever</h1>
-                        <p className="text-gray-600">Compete in fitness challenges with friends</p>
+                        <h1 className="font-display font-bold text-4xl text-white mb-2">
+                            <span className="text-accent">A</span>chiever
+                        </h1>
+                        <p className="text-navy-300 font-body">
+                            Compete in fitness challenges with friends
+                        </p>
                     </div>
 
-                    <h2 className="text-xl font-semibold text-center mb-6">
+                    <h2 className="font-display font-semibold text-lg text-white text-center mb-6">
                         Enter your email to sign in
                     </h2>
 
@@ -64,18 +73,23 @@ const Home = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="name@example.com"
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-500
+                                           rounded-xl px-4 py-3 font-body
+                                           focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent/50
+                                           transition-all"
                             />
                         </div>
 
                         {error && (
-                            <p className="text-red-500 text-sm">{error}</p>
+                            <p className="text-red-400 text-sm font-body">{error}</p>
                         )}
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg disabled:opacity-50"
+                            className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                                       py-3 rounded-xl disabled:opacity-50 transition-all duration-200
+                                       hover:shadow-lg hover:shadow-accent/20"
                         >
                             {loading ? 'Checking...' : 'Continue'}
                         </button>

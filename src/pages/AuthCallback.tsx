@@ -62,47 +62,50 @@ const AuthCallback = () => {
 
     if (mismatch) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4">
                 <div className="max-w-md w-full">
-                    <div className="bg-white rounded-lg shadow-md p-8">
-                        <h2 className="text-xl font-semibold text-red-600 mb-4">
+                    <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
+                        <h2 className="font-display font-semibold text-xl text-red-400 mb-4">
                             Email doesn't match
                         </h2>
-                        <p className="text-gray-600 mb-4">
-                            You entered <strong>{mismatch.pendingEmail}</strong>, but your
+                        <p className="text-navy-300 mb-4 font-body">
+                            You entered <strong className="text-white">{mismatch.pendingEmail}</strong>, but your
                             Strava account is linked to a different email (
-                            <strong>{mismatch.actualEmail}</strong>).
+                            <strong className="text-white">{mismatch.actualEmail}</strong>).
                         </p>
-                        <p className="text-gray-600 mb-6">
+                        <p className="text-navy-300 mb-6 font-body">
                             To create an account with{' '}
-                            <strong>{mismatch.pendingEmail}</strong>, please log out of Strava
+                            <strong className="text-white">{mismatch.pendingEmail}</strong>, please log out of Strava
                             first, or use the email associated with your Strava account.
                         </p>
 
                         <button
                             onClick={() => navigate('/')}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg mb-3"
+                            className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold py-3 rounded-xl mb-3 transition-all"
                         >
                             Try different email
                         </button>
 
                         <a
-                        href="https://www.strava.com/logout"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full text-center border border-gray-300 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-50"
+                            href="https://www.strava.com/logout"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full text-center border border-navy-600/50 text-navy-300 font-body py-3 rounded-xl hover:bg-navy-700/30 transition-colors"
                         >
-                        Log out of Strava
-                    </a>
+                            Log out of Strava
+                        </a>
+                    </div>
                 </div>
             </div>
-    </div>
-    );
+        );
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center">
-            <p>Logging in...</p>
+        <div className="min-h-screen bg-navy-950 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <p className="text-navy-400 font-body">Logging in...</p>
+            </div>
         </div>
     );
 };

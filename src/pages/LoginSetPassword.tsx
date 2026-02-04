@@ -10,25 +10,21 @@ const LoginSetPassword = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4">
             <div className="max-w-md w-full">
-                <div className="bg-white rounded-lg shadow-md p-8">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="text-gray-500 hover:text-gray-700 mb-4"
-                    >
+                <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
+                    <button onClick={() => navigate('/')} className="text-navy-400 hover:text-navy-200 mb-4 text-sm font-body">
                         ← Back
                     </button>
-
-                    <h2 className="text-xl font-semibold mb-2">Account found!</h2>
-                    <p className="text-gray-600 mb-6">
-                        We found an account for <strong>{email}</strong>, but you haven't set a password yet.
+                    <h2 className="font-display font-semibold text-xl text-white mb-2">Account found!</h2>
+                    <p className="text-navy-300 mb-6 font-body">
+                        We found an account for <strong className="text-white">{email}</strong>, but you haven't set a password yet.
                         Please sign in with Strava to continue.
                     </p>
-
                     <button
                         onClick={handleConnectStrava}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg"
+                        className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                                   py-3 rounded-xl transition-all hover:shadow-lg hover:shadow-accent/20"
                     >
                         Continue with Strava
                     </button>

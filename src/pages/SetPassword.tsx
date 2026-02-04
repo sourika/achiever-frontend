@@ -11,20 +11,10 @@ const SetPassword = () => {
 
     const handleSetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-
+        if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+        if (password !== confirmPassword) { setError('Passwords do not match'); return; }
         setLoading(true);
         setError('');
-
         try {
             await api.post('/api/auth/set-password', { password });
             navigate('/dashboard');
@@ -36,56 +26,44 @@ const SetPassword = () => {
         }
     };
 
-    const handleSkip = () => {
-        navigate('/dashboard');
-    };
-
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4">
             <div className="max-w-md w-full">
-                <div className="bg-white rounded-lg shadow-md p-8">
-                    <h2 className="text-xl font-semibold mb-2">Set a password</h2>
-                    <p className="text-gray-600 mb-6">
+                <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
+                    <h2 className="font-display font-semibold text-xl text-white mb-2">Set a password</h2>
+                    <p className="text-navy-300 mb-6 font-body">
                         Create a password so you can sign in without Strava next time.
                     </p>
-
                     <form onSubmit={handleSetPassword} className="space-y-4">
-                        <div>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="New password"
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-
-                        <div>
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                placeholder="Confirm password"
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-
-                        {error && (
-                            <p className="text-red-500 text-sm">{error}</p>
-                        )}
-
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="New password"
+                            className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-500
+                                       rounded-xl px-4 py-3 font-body focus:outline-none focus:ring-2 focus:ring-accent/50"
+                        />
+                        <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm password"
+                            className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-500
+                                       rounded-xl px-4 py-3 font-body focus:outline-none focus:ring-2 focus:ring-accent/50"
+                        />
+                        {error && <p className="text-red-400 text-sm font-body">{error}</p>}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg disabled:opacity-50"
+                            className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                                       py-3 rounded-xl disabled:opacity-50 transition-all hover:shadow-lg hover:shadow-accent/20"
                         >
                             {loading ? 'Saving...' : 'Set password'}
                         </button>
                     </form>
-
                     <button
-                        onClick={handleSkip}
-                        className="w-full mt-3 text-gray-500 hover:text-gray-700 py-2"
+                        onClick={() => navigate('/dashboard')}
+                        className="w-full mt-3 text-navy-500 hover:text-navy-300 py-2 font-body text-sm transition-colors"
                     >
                         Skip for now
                     </button>

@@ -12,16 +12,13 @@ const LoginPassword = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (!email) {
-            navigate('/');
-        }
+        if (!email) navigate('/');
     }, [email, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-
         try {
             const response = await api.post('/api/auth/login', { email, password });
             localStorage.setItem('token', response.data.token);
@@ -37,38 +34,29 @@ const LoginPassword = () => {
     if (!email) return null;
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4">
             <div className="max-w-md w-full">
-                <div className="bg-white rounded-lg shadow-md p-8">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="text-gray-500 hover:text-gray-700 mb-4"
-                    >
+                <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
+                    <button onClick={() => navigate('/')} className="text-navy-400 hover:text-navy-200 mb-4 text-sm font-body">
                         ← Back
                     </button>
-
-                    <h2 className="text-xl font-semibold mb-2">Welcome back!</h2>
-                    <p className="text-gray-600 mb-6">{email}</p>
-
+                    <h2 className="font-display font-semibold text-xl text-white mb-2">Welcome back!</h2>
+                    <p className="text-navy-400 mb-6 font-body">{email}</p>
                     <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter your password"
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-
-                        {error && (
-                            <p className="text-red-500 text-sm">{error}</p>
-                        )}
-
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-500
+                                       rounded-xl px-4 py-3 font-body focus:outline-none focus:ring-2 focus:ring-accent/50"
+                        />
+                        {error && <p className="text-red-400 text-sm font-body">{error}</p>}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg disabled:opacity-50"
+                            className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                                       py-3 rounded-xl disabled:opacity-50 transition-all hover:shadow-lg hover:shadow-accent/20"
                         >
                             {loading ? 'Signing in...' : 'Sign in'}
                         </button>

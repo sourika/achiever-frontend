@@ -23,10 +23,7 @@ const CreateChallenge = () => {
     const [name, setName] = useState('');
     const [selectedSports, setSelectedSports] = useState<Set<SportType>>(new Set());
     const [goals, setGoals] = useState<Record<SportType, number>>({
-        RUN: 50,
-        RIDE: 100,
-        SWIM: 5,
-        WALK: 30,
+        RUN: 50, RIDE: 100, SWIM: 5, WALK: 30,
     });
     const [startAt, setStartAt] = useState(new Date().toISOString().split('T')[0]);
     const [endAt, setEndAt] = useState(
@@ -38,15 +35,10 @@ const CreateChallenge = () => {
 
     const toggleSport = (sport: SportType) => {
         const newSelected = new Set(selectedSports);
-        if (newSelected.has(sport)) {
-            newSelected.delete(sport);
-        } else {
-            newSelected.add(sport);
-        }
+        if (newSelected.has(sport)) newSelected.delete(sport);
+        else newSelected.add(sport);
         setSelectedSports(newSelected);
-        if (fieldErrors.sports) {
-            setFieldErrors(prev => ({ ...prev, sports: '' }));
-        }
+        if (fieldErrors.sports) setFieldErrors(prev => ({ ...prev, sports: '' }));
     };
 
     const updateGoal = (sport: SportType, value: number) => {
@@ -55,69 +47,48 @@ const CreateChallenge = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         setFieldErrors({});
         setError('');
-
         if (selectedSports.size === 0) {
             setFieldErrors({ sports: 'Please select at least one sport' });
             return;
         }
-
         setLoading(true);
-
         const goalsToSend: Record<string, number> = {};
-        selectedSports.forEach((sport) => {
-            goalsToSend[sport] = goals[sport];
-        });
-
+        selectedSports.forEach((sport) => { goalsToSend[sport] = goals[sport]; });
         try {
             const response = await api.post('/api/challenges', {
-                name: name || null,
-                goals: goalsToSend,
-                startAt,
-                endAt,
+                name: name || null, goals: goalsToSend, startAt, endAt,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             });
             navigate(`/challenges/${response.data.id}`);
         } catch (err: unknown) {
-            const axiosError = err as {
-                response?: {
-                    data?: {
-                        message?: string;
-                        errors?: Record<string, string>;
-                    }
-                }
-            };
-
-            if (axiosError.response?.data?.errors) {
-                setFieldErrors(axiosError.response.data.errors);
-            } else {
-                setError(axiosError.response?.data?.message || 'Failed to create challenge');
-            }
+            const axiosError = err as { response?: { data?: { message?: string; errors?: Record<string, string> } } };
+            if (axiosError.response?.data?.errors) setFieldErrors(axiosError.response.data.errors);
+            else setError(axiosError.response?.data?.message || 'Failed to create challenge');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div className="min-h-screen bg-navy-950 p-4 sm:p-8">
             <div className="max-w-md mx-auto">
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-6">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="text-gray-500 hover:text-gray-700 mb-4"
+                        className="text-navy-400 hover:text-navy-200 mb-4 text-sm font-body"
                     >
                         ← Back
                     </button>
 
-                    <h1 className="text-2xl font-bold mb-6">Create Challenge</h1>
+                    <h1 className="font-display font-bold text-2xl text-white mb-6">Create Challenge</h1>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Challenge Name */}
+                        {/* Name */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Challenge Name <span className="text-gray-400">(optional)</span>
+                            <label className="block text-sm font-medium text-navy-300 mb-1 font-body">
+                                Challenge Name <span className="text-navy-600">(optional)</span>
                             </label>
                             <input
                                 type="text"
@@ -125,44 +96,45 @@ const CreateChallenge = () => {
                                 onChange={(e) => setName(e.target.value.slice(0, 50))}
                                 placeholder="e.g. Winter Battle"
                                 maxLength={50}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3"
+                                className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-500
+                                           rounded-xl px-4 py-3 font-body focus:outline-none focus:ring-2 focus:ring-accent/50"
                             />
-                            <p className="text-gray-400 text-xs mt-1">{name.length}/50</p>
+                            <p className="text-navy-600 text-xs mt-1 font-body">{name.length}/50</p>
                         </div>
 
                         {/* Sport Selection */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                            <label className="block text-sm font-medium text-navy-300 mb-3 font-body">
                                 Select Sports & Set Goals
                             </label>
                             <div className="space-y-3">
                                 {SPORTS.map((sport) => (
                                     <div
                                         key={sport.type}
-                                        className={`border rounded-lg p-4 transition-all ${
+                                        className={`border rounded-xl p-4 transition-all cursor-pointer ${
                                             selectedSports.has(sport.type)
-                                                ? 'border-orange-500 bg-orange-50'
+                                                ? 'border-accent/50 bg-accent/5'
                                                 : fieldErrors.sports
-                                                    ? 'border-red-500 bg-red-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    ? 'border-red-500/50 bg-red-500/5'
+                                                    : 'border-navy-600/40 hover:border-navy-500/50 bg-navy-800/30'
                                         }`}
+                                        onClick={() => toggleSport(sport.type)}
                                     >
                                         <div className="flex items-center justify-between">
                                             <label className="flex items-center cursor-pointer flex-1">
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedSports.has(sport.type)}
-                                                    onChange={() => toggleSport(sport.type)}
-                                                    className="h-5 w-5 text-orange-500 rounded border-gray-300 focus:ring-orange-500"
+                                                    onChange={() => {}}
+                                                    className="h-5 w-5 rounded border-navy-500 bg-navy-900 text-accent focus:ring-accent/50"
                                                 />
-                                                <span className="ml-3 text-lg">
+                                                <span className="ml-3 text-lg text-white font-body">
                                                     {sport.emoji} {sport.label}
                                                 </span>
                                             </label>
                                         </div>
-
                                         {selectedSports.has(sport.type) && (
-                                            <div className="mt-3 flex items-center gap-2">
+                                            <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                 <input
                                                     type="number"
                                                     value={goals[sport.type] || ''}
@@ -171,81 +143,67 @@ const CreateChallenge = () => {
                                                         updateGoal(sport.type, isNaN(val) ? 0 : val);
                                                     }}
                                                     min="1"
-                                                    className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-center"
+                                                    className="w-24 bg-navy-900/80 border border-navy-600/50 text-white
+                                                               rounded-lg px-3 py-2 text-center font-mono
+                                                               focus:outline-none focus:ring-2 focus:ring-accent/50"
                                                 />
-                                                <span className="text-gray-600">{sport.unit}</span>
+                                                <span className="text-navy-400 font-body">{sport.unit}</span>
                                             </div>
                                         )}
                                     </div>
                                 ))}
                             </div>
                             {fieldErrors.sports && (
-                                <p className="text-red-500 text-sm mt-2">{fieldErrors.sports}</p>
+                                <p className="text-red-400 text-sm mt-2 font-body">{fieldErrors.sports}</p>
                             )}
                         </div>
 
-                        {/* Date Selection */}
+                        {/* Dates */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Start Date
-                                </label>
+                                <label className="block text-sm font-medium text-navy-300 mb-1 font-body">Start Date</label>
                                 <input
                                     type="date"
                                     value={startAt}
                                     onChange={(e) => {
                                         setStartAt(e.target.value);
-                                        if (fieldErrors.startAt) {
-                                            setFieldErrors(prev => ({ ...prev, startAt: '' }));
-                                        }
+                                        if (fieldErrors.startAt) setFieldErrors(prev => ({ ...prev, startAt: '' }));
                                     }}
-                                    className={`w-full border rounded-lg px-4 py-3 ${
-                                        fieldErrors.startAt
-                                            ? 'border-red-500 bg-red-50'
-                                            : 'border-gray-300'
+                                    className={`w-full bg-navy-900/80 border text-white rounded-xl px-4 py-3 font-body
+                                               focus:outline-none focus:ring-2 focus:ring-accent/50 ${
+                                        fieldErrors.startAt ? 'border-red-500/50' : 'border-navy-600/50'
                                     }`}
                                 />
-                                {fieldErrors.startAt && (
-                                    <p className="text-red-500 text-sm mt-1">{fieldErrors.startAt}</p>
-                                )}
+                                {fieldErrors.startAt && <p className="text-red-400 text-sm mt-1 font-body">{fieldErrors.startAt}</p>}
                             </div>
-
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    End Date
-                                </label>
+                                <label className="block text-sm font-medium text-navy-300 mb-1 font-body">End Date</label>
                                 <input
                                     type="date"
                                     value={endAt}
                                     onChange={(e) => {
                                         setEndAt(e.target.value);
-                                        if (fieldErrors.endAt) {
-                                            setFieldErrors(prev => ({ ...prev, endAt: '' }));
-                                        }
+                                        if (fieldErrors.endAt) setFieldErrors(prev => ({ ...prev, endAt: '' }));
                                     }}
-                                    className={`w-full border rounded-lg px-4 py-3 ${
-                                        fieldErrors.endAt
-                                            ? 'border-red-500 bg-red-50'
-                                            : 'border-gray-300'
+                                    className={`w-full bg-navy-900/80 border text-white rounded-xl px-4 py-3 font-body
+                                               focus:outline-none focus:ring-2 focus:ring-accent/50 ${
+                                        fieldErrors.endAt ? 'border-red-500/50' : 'border-navy-600/50'
                                     }`}
                                 />
-                                {fieldErrors.endAt && (
-                                    <p className="text-red-500 text-sm mt-1">{fieldErrors.endAt}</p>
-                                )}
+                                {fieldErrors.endAt && <p className="text-red-400 text-sm mt-1 font-body">{fieldErrors.endAt}</p>}
                             </div>
                         </div>
 
                         {/* Summary */}
                         {selectedSports.size > 0 && (
-                            <div className="bg-gray-50 rounded-lg p-4">
-                                <p className="text-sm text-gray-600 mb-2">Challenge Summary:</p>
+                            <div className="bg-navy-900/50 border border-navy-700/30 rounded-xl p-4">
+                                <p className="text-sm text-navy-400 mb-2 font-body">Challenge Summary:</p>
                                 <div className="flex flex-wrap gap-2">
                                     {Array.from(selectedSports).map((sport) => {
                                         const config = SPORTS.find(s => s.type === sport)!;
                                         return (
-                                            <span
-                                                key={sport}
-                                                className="bg-white border border-gray-200 rounded-full px-3 py-1 text-sm"
+                                            <span key={sport}
+                                                className="bg-navy-800 border border-navy-600/40 rounded-full px-3 py-1 text-sm text-white font-body"
                                             >
                                                 {config.emoji} {goals[sport]} {config.unit}
                                             </span>
@@ -255,12 +213,13 @@ const CreateChallenge = () => {
                             </div>
                         )}
 
-                        {error && <p className="text-red-500 text-sm">{error}</p>}
+                        {error && <p className="text-red-400 text-sm font-body">{error}</p>}
 
                         <button
                             type="submit"
                             disabled={loading || selectedSports.size === 0}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-lg disabled:opacity-50"
+                            className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                                       py-3 rounded-xl disabled:opacity-50 transition-all hover:shadow-lg hover:shadow-accent/20"
                         >
                             {loading ? 'Creating...' : 'Create Challenge'}
                         </button>
