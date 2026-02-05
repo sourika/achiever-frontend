@@ -83,7 +83,7 @@ const Home = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="name@example.com"
-                                    className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-500
+                                    className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-400
                                                rounded-xl px-4 py-3 font-body
                                                focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent/50
                                                transition-all"

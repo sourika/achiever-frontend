@@ -4,11 +4,12 @@ const LoginNotFound = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const email = location.state?.email || '';
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
     const handleCreateAccount = () => {
         localStorage.setItem('pendingEmail', email);
         localStorage.removeItem('token');
-        window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/strava?prompt=consent&email=${encodeURIComponent(email)}`;
+        window.location.href = `${apiUrl}/api/auth/strava?prompt=consent&email=${encodeURIComponent(email)}`;
     };
 
     return (
@@ -24,12 +25,12 @@ const LoginNotFound = () => {
                     </p>
                     <button
                         onClick={handleCreateAccount}
-                        className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold 
+                        className="w-full bg-accent hover:bg-accent-hover text-white font-display font-semibold
                                    py-3 rounded-xl transition-all hover:shadow-lg hover:shadow-accent/20"
                     >
                         Create account
                     </button>
-                    <p className="text-center text-navy-500 text-sm mt-4 font-body">
+                    <p className="text-center text-navy-400 text-sm mt-4 font-body">
                         You'll connect with Strava to create your account
                     </p>
                 </div>

@@ -48,7 +48,7 @@ const LoginPassword = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter your password"
-                            className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-500
+                            className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-400
                                        rounded-xl px-4 py-3 font-body focus:outline-none focus:ring-2 focus:ring-accent/50"
                         />
                         {error && <p className="text-red-400 text-sm font-body">{error}</p>}
