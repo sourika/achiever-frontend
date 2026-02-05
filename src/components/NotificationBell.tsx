@@ -118,7 +118,7 @@ const NotificationBell = ({ onNewNotification }: Props) => {
     return (
         <div className="relative" ref={dropdownRef}>
             <button onClick={handleToggle}
-                className="relative p-2 text-navy-400 hover:text-navy-200 focus:outline-none transition-colors">
+                className="relative p-2 text-navy-300 hover:text-navy-200 focus:outline-none transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
                     viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round"

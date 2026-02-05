@@ -262,7 +262,7 @@ const ChallengeCard = ({
 
             {/* Date row */}
             <div className="flex items-center gap-1.5 mb-4">
-                <svg className="w-3.5 h-3.5 text-navy-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 text-navy-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -357,7 +357,7 @@ const ChallengeCard = ({
                         <span className="text-white text-sm">{me?.username || 'You'}</span>
                     </div>
 
-                    <span className="text-navy-500 text-xs font-display font-bold">VS</span>
+                    <span className="text-navy-300 text-xs font-display font-bold">VS</span>
 
                     <div className="flex items-center gap-2">
                         {opponent ? (
@@ -371,9 +371,9 @@ const ChallengeCard = ({
                             </>
                         ) : (
                             <>
-                                <span className="text-navy-500 text-sm italic">Waiting...</span>
+                                <span className="text-navy-300 text-sm italic">Waiting...</span>
                                 <div className="w-7 h-7 rounded-full bg-navy-700/40 border border-navy-600/30 border-dashed flex items-center justify-center">
-                                    <span className="text-navy-500 text-[10px]">?</span>
+                                    <span className="text-navy-300 text-[10px]">?</span>
                                 </div>
                             </>
                         )}
@@ -452,7 +452,7 @@ const Dashboard = () => {
             <div className="min-h-screen flex items-center justify-center bg-navy-950">
                 <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                    <span className="text-navy-400 text-sm font-body">Loading...</span>
+                    <span className="text-navy-300 text-sm font-body">Loading...</span>
                 </div>
             </div>
         );
@@ -467,8 +467,8 @@ const Dashboard = () => {
                         <h1 className="font-display font-bold text-xl text-white">
                             <span className="text-accent">A</span>chiever
                         </h1>
-                        <span className="hidden sm:inline text-navy-500 text-sm">|</span>
-                        <span className="hidden sm:inline text-navy-400 text-sm font-body">
+                        <span className="hidden sm:inline text-navy-300 text-sm">|</span>
+                        <span className="hidden sm:inline text-navy-300 text-sm font-body">
                             {user?.username}
                         </span>
                     </div>
@@ -476,7 +476,7 @@ const Dashboard = () => {
                         <NotificationBell onNewNotification={() => setNotificationTrigger(n => n + 1)} />
                         <button
                             onClick={handleLogout}
-                            className="text-navy-400 hover:text-navy-200 text-sm font-body px-3 py-1.5 rounded-lg 
+                            className="text-navy-300 hover:text-navy-200 text-sm font-body px-3 py-1.5 rounded-lg
                                        hover:bg-navy-800/50 transition-colors"
                         >
                             Logout
@@ -506,8 +506,8 @@ const Dashboard = () => {
                 {challenges.length === 0 ? (
                     <div className="text-center py-20">
                         <div className="text-5xl mb-4">🏁</div>
-                        <p className="text-navy-400 text-lg font-body mb-2">No challenges yet</p>
-                        <p className="text-navy-500 text-sm font-body">Create your first challenge and invite a friend!</p>
+                        <p className="text-navy-200 text-lg font-body mb-2">No challenges yet</p>
+                        <p className="text-navy-300 text-sm font-body">Create your first challenge and invite a friend!</p>
                     </div>
                 ) : (
                     <div className="grid gap-4">

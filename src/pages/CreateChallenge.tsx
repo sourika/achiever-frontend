@@ -77,7 +77,7 @@ const CreateChallenge = () => {
                 <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-6">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="text-navy-400 hover:text-navy-200 mb-4 text-sm font-body"
+                        className="text-navy-300 hover:text-navy-200 mb-4 text-sm font-body"
                     >
                         ← Back
                     </button>
@@ -147,7 +147,7 @@ const CreateChallenge = () => {
                                                                rounded-lg px-3 py-2 text-center font-mono
                                                                focus:outline-none focus:ring-2 focus:ring-accent/50"
                                                 />
-                                                <span className="text-navy-400 font-body">{sport.unit}</span>
+                                                <span className="text-navy-300 font-body">{sport.unit}</span>
                                             </div>
                                         )}
                                     </div>
@@ -197,7 +197,7 @@ const CreateChallenge = () => {
                         {/* Summary */}
                         {selectedSports.size > 0 && (
                             <div className="bg-navy-900/50 border border-navy-700/30 rounded-xl p-4">
-                                <p className="text-sm text-navy-400 mb-2 font-body">Challenge Summary:</p>
+                                <p className="text-sm text-navy-300 mb-2 font-body">Challenge Summary:</p>
                                 <div className="flex flex-wrap gap-2">
                                     {Array.from(selectedSports).map((sport) => {
                                         const config = SPORTS.find(s => s.type === sport)!;

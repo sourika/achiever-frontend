@@ -3,7 +3,7 @@ const Privacy = () => {
         <div className="min-h-screen bg-navy-950 p-4 sm:p-8">
             <div className="max-w-2xl mx-auto bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
                 <h1 className="font-display font-bold text-2xl text-white mb-6">Privacy Policy</h1>
-                <p className="text-navy-400 mb-4 font-body">Last updated: January 2025</p>
+                <p className="text-navy-300 mb-4 font-body">Last updated: January 2025</p>
 
                 <h2 className="font-display font-semibold text-lg text-white mt-6 mb-2">Data We Collect</h2>
                 <p className="text-navy-300 mb-4 font-body">

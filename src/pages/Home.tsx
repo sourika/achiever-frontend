@@ -115,11 +115,11 @@ const Home = () => {
                         © {new Date().getFullYear()} Achiever. All rights reserved.
                     </span>
                     <div className="flex items-center gap-4">
-                        <Link to="/privacy" className="text-navy-400 hover:text-white text-xs font-body transition-colors">
+                        <Link to="/privacy" className="text-navy-300 hover:text-white text-xs font-body transition-colors">
                             Privacy Policy
                         </Link>
                         <span className="text-navy-700 text-xs">|</span>
-                        <a href="mailto:support@achiever.fit" className="text-navy-400 hover:text-white text-xs font-body transition-colors">
+                        <a href="mailto:support@achiever.fit" className="text-navy-300 hover:text-white text-xs font-body transition-colors">
                             Contact
                         </a>
                     </div>

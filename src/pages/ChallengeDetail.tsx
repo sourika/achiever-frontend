@@ -156,7 +156,7 @@ const ChallengeDetail = () => {
             <div className="min-h-screen flex items-center justify-center bg-navy-950">
                 <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                    <span className="text-navy-400 text-sm font-body">Loading...</span>
+                    <span className="text-navy-300 text-sm font-body">Loading...</span>
                 </div>
             </div>
         );
@@ -176,7 +176,7 @@ const ChallengeDetail = () => {
             <div className="max-w-2xl mx-auto">
                 <button
                     onClick={() => navigate('/dashboard')}
-                    className="text-navy-400 hover:text-navy-200 mb-4 text-sm font-body"
+                    className="text-navy-300 hover:text-navy-200 mb-4 text-sm font-body"
                 >
                     ← Back to Dashboard
                 </button>
@@ -266,7 +266,7 @@ const ChallengeDetail = () => {
 
                             {/* Date */}
                             <div className="flex items-center gap-1.5 mb-2">
-                                <svg className="w-4 h-4 text-navy-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-navy-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -300,7 +300,7 @@ const ChallengeDetail = () => {
                                 challenge.status === 'COMPLETED' ? 'bg-navy-700/50 text-navy-300' :
                                 challenge.status === 'EXPIRED' ? 'bg-gray-800/50 text-gray-500' :
                                 challenge.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400' :
-                                'bg-navy-700/50 text-navy-400'
+                                'bg-navy-700/50 text-navy-300'
                             }`}>
                                 {challenge.status}
                             </span>
@@ -418,7 +418,7 @@ const ChallengeDetail = () => {
                                                     <span className="text-navy-200 font-body">
                                                         {config?.emoji} {config?.label}
                                                     </span>
-                                                    <span className="text-navy-400 font-mono text-xs">
+                                                    <span className="text-navy-300 font-mono text-xs">
                                                         {(distanceMeters / 1000).toFixed(1)} / {goalKm} km ({percent}%)
                                                     </span>
                                                 </div>

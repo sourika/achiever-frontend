@@ -120,7 +120,7 @@ const JoinChallenge = () => {
             <div className="min-h-screen flex items-center justify-center bg-navy-950">
                 <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                    <span className="text-navy-400 text-sm font-body">Loading...</span>
+                    <span className="text-navy-300 text-sm font-body">Loading...</span>
                 </div>
             </div>
         );
@@ -168,7 +168,7 @@ const JoinChallenge = () => {
             <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4">
                 <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8 max-w-md w-full text-center">
                     <h1 className="font-display font-bold text-xl text-navy-300 mb-4">Challenge Full</h1>
-                    <p className="text-navy-400 mb-6 font-body">
+                    <p className="text-navy-300 mb-6 font-body">
                         This challenge already has the maximum number of participants.
                     </p>
                     <button onClick={() => navigate('/')}
@@ -204,11 +204,11 @@ const JoinChallenge = () => {
                         </span>
                     </div>
                     <div className="flex items-center gap-1.5 mb-2">
-                        <svg className="w-3.5 h-3.5 text-navy-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-navy-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span className="text-navy-400 text-sm font-body">
+                        <span className="text-navy-300 text-sm font-body">
                             {challenge?.startAt ? formatDate(challenge.startAt) : ''} – {challenge?.endAt ? formatDate(challenge.endAt) : ''}
                         </span>
                     </div>
@@ -259,7 +259,7 @@ const JoinChallenge = () => {
                                                     className="w-20 bg-navy-900/80 border border-navy-600/50 text-white rounded-lg 
                                                                px-2 py-1 text-center font-mono focus:outline-none focus:ring-2 focus:ring-accent/50"
                                                 />
-                                                <span className="text-navy-400 text-sm font-body">{sport.unit}</span>
+                                                <span className="text-navy-300 text-sm font-body">{sport.unit}</span>
                                             </div>
                                         )}
                                     </div>

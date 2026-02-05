@@ -9,6 +9,7 @@ import SetPassword from './pages/SetPassword';
 import CreateChallenge from './pages/CreateChallenge';
 import ChallengeDetail from './pages/ChallengeDetail';
 import JoinChallenge from './pages/JoinChallenge';
+import Privacy from './pages/Privacy';
 
 function App() {
     return (
@@ -24,6 +25,7 @@ function App() {
                 <Route path="/challenges/new" element={<CreateChallenge />} />
                 <Route path="/challenges/:id" element={<ChallengeDetail />} />
                 <Route path="/join/:code" element={<JoinChallenge />} />
+                <Route path="/privacy" element={<Privacy />} />
             </Routes>
         </BrowserRouter>
     );
