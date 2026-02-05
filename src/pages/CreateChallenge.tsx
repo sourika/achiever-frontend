@@ -87,8 +87,8 @@ const CreateChallenge = () => {
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Name */}
                         <div>
-                            <label className="block text-sm font-medium text-navy-300 mb-1 font-body">
-                                Challenge Name <span className="text-navy-600">(optional)</span>
+                            <label className="block text-sm font-medium text-navy-200 mb-1 font-body">
+                                Challenge Name <span className="text-navy-200">(optional)</span>
                             </label>
                             <input
                                 type="text"
@@ -104,7 +104,7 @@ const CreateChallenge = () => {
 
                         {/* Sport Selection */}
                         <div>
-                            <label className="block text-sm font-medium text-navy-300 mb-3 font-body">
+                            <label className="block text-sm font-medium text-navy-200 mb-3 font-body">
                                 Select Sports & Set Goals
                             </label>
                             <div className="space-y-3">
@@ -161,7 +161,7 @@ const CreateChallenge = () => {
                         {/* Dates */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-navy-300 mb-1 font-body">Start Date</label>
+                                <label className="block text-sm font-medium text-navy-200 mb-1 font-body">Start Date</label>
                                 <input
                                     type="date"
                                     value={startAt}
@@ -177,7 +177,7 @@ const CreateChallenge = () => {
                                 {fieldErrors.startAt && <p className="text-red-400 text-sm mt-1 font-body">{fieldErrors.startAt}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-navy-300 mb-1 font-body">End Date</label>
+                                <label className="block text-sm font-medium text-navy-200 mb-1 font-body">End Date</label>
                                 <input
                                     type="date"
                                     value={endAt}
