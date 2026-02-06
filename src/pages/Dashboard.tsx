@@ -467,8 +467,8 @@ const Dashboard = () => {
                         <h1 className="font-display font-bold text-xl text-white">
                             <span className="text-accent">A</span>chiever
                         </h1>
-                        <span className="hidden sm:inline text-navy-300 text-sm">|</span>
-                        <span className="hidden sm:inline text-navy-300 text-sm font-body">
+                        <span className="hidden sm:inline text-navy-200 text-sm">|</span>
+                        <span className="hidden sm:inline text-navy-200 text-sm font-body">
                             {user?.username}
                         </span>
                     </div>

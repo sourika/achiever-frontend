@@ -88,7 +88,7 @@ const CreateChallenge = () => {
                         {/* Name */}
                         <div>
                             <label className="block text-sm font-medium text-navy-200 mb-1 font-body">
-                                Challenge Name <span className="text-navy-200">(optional)</span>
+                                Challenge Name <span className="text-navy-400">(optional)</span>
                             </label>
                             <input
                                 type="text"
@@ -99,7 +99,7 @@ const CreateChallenge = () => {
                                 className="w-full bg-navy-900/80 border border-navy-600/50 text-white placeholder-navy-400
                                            rounded-xl px-4 py-3 font-body focus:outline-none focus:ring-2 focus:ring-accent/50"
                             />
-                            <p className="text-navy-600 text-xs mt-1 font-body">{name.length}/50</p>
+                            <p className="text-navy-400 text-xs mt-1 font-body">{name.length}/50</p>
                         </div>
 
                         {/* Sport Selection */}
