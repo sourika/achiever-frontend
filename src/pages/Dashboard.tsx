@@ -467,8 +467,8 @@ const Dashboard = () => {
                         <h1 className="font-display font-bold text-xl text-white">
                             <span className="text-accent">A</span>chiever
                         </h1>
-                        <span className="hidden sm:inline text-navy-200 text-sm">|</span>
-                        <span className="hidden sm:inline text-navy-200 text-sm font-body">
+                        <span className="hidden sm:inline text-navy-100 text-sm">|</span>
+                        <span className="hidden sm:inline text-navy-100 text-sm font-body">
                             {user?.username}
                         </span>
                     </div>
@@ -476,7 +476,7 @@ const Dashboard = () => {
                         <NotificationBell onNewNotification={() => setNotificationTrigger(n => n + 1)} />
                         <button
                             onClick={handleLogout}
-                            className="text-navy-300 hover:text-navy-200 text-sm font-body px-3 py-1.5 rounded-lg
+                            className="text-navy-200 hover:text-navy-100 text-sm font-body px-3 py-1.5 rounded-lg
                                        hover:bg-navy-800/50 transition-colors"
                         >
                             Logout
