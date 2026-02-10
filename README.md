@@ -1,73 +1,145 @@
-# React + TypeScript + Vite
+# Achiever Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React application for the Achiever fitness challenge platform.
 
-Currently, two official plugins are available:
+Turn fitness into a fair game: integrate your Strava, set your own targets, and challenge friends to see who can get closest to their personal 100% within the deadline.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
 
-## React Compiler
+- **Framework:** React 19
+- **Routing:** React Router 7
+- **Build Tool:** Vite 7
+- **Styling:** TailwindCSS
+- **HTTP Client:** Axios
+- **Data Fetching:** TanStack React Query
+- **Language:** TypeScript
+- **Testing:** Vitest + React Testing Library
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 18+
+- npm or yarn
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Quick Start
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 1. Install Dependencies
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Configure Environment
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create `.env` file:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_URL=http://localhost:8080
 ```
+
+### 3. Run Development Server
+
+```bash
+npm run dev
+```
+
+App runs at `http://localhost:5173`
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run tests in watch mode |
+| `npm run test:run` | Run tests once |
+| `npm run test:ui` | Run tests with UI |
+| `npm run test:coverage` | Run tests with coverage |
+
+## Project Structure
+
+```
+src/
+├── api/
+│   └── client.ts           # Axios instance with JWT interceptor
+├── components/
+│   └── NotificationBell.tsx # In-app notifications dropdown
+├── pages/
+│   ├── Home.tsx            # Email entry (sign in)
+│   ├── LoginPassword.tsx   # Password login
+│   ├── LoginSetPassword.tsx # Set password for new users
+│   ├── LoginNotFound.tsx   # User not found
+│   ├── SetPassword.tsx     # Set password (authenticated)
+│   ├── AuthCallback.tsx    # Strava OAuth callback handler
+│   ├── Dashboard.tsx       # Challenge list & progress
+│   ├── CreateChallenge.tsx # Create new challenge
+│   ├── JoinChallenge.tsx   # Join via invite link
+│   ├── ChallengeDetail.tsx # Challenge details & progress
+│   └── Privacy.tsx         # Privacy policy
+├── __tests__/              # Test files
+├── __mocks__/              # API mocks for tests
+├── App.tsx                 # Routes configuration
+├── main.tsx                # Entry point
+└── index.css               # Global styles & Tailwind
+```
+
+## Features
+
+- **Authentication** — Email/password login + Strava OAuth
+- **Dashboard** — View all challenges with status badges and progress
+- **Challenge Creation** — Multi-sport goals (Run, Ride, Swim, Walk)
+- **Invite System** — Share invite links with friends
+- **Real-time Progress** — Synced from Strava
+- **Notifications** — In-app bell with unread count
+- **Countdown Timers** — Time until start/end/expiry
+- **Dark Theme** — Navy esports-style UI
+
+## Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run once (CI mode)
+npm run test:run
+
+# With coverage report
+npm run test:coverage
+```
+
+**Test Coverage:**
+- 6 test files
+- 43 tests total
+- Pages: Home, LoginPassword, CreateChallenge, JoinChallenge, Dashboard
+- Components: NotificationBell
+
+## Deployment (Vercel)
+
+### Via CLI
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+### Via GitHub
+
+1. Connect repository to Vercel
+2. Set environment variable: `VITE_API_URL=https://your-backend.fly.dev`
+3. Deploy automatically on push
+
+**Production URL:** https://achiever-frontend.vercel.app
+
+## Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_API_URL` | Backend API URL | `https://achiever-backend.fly.dev` |
+
+## License
+
+MIT
