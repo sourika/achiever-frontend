@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
 interface RenderOptions {
     route?: string;
