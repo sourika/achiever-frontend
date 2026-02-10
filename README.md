@@ -129,16 +129,16 @@ vercel
 ### Via GitHub
 
 1. Connect repository to Vercel
-2. Set environment variable: `VITE_API_URL=https://your-backend.fly.dev`
+2. Set environment variable: `VITE_API_URL=https://api.achiever.fit`
 3. Deploy automatically on push
 
-**Production URL:** https://achiever-frontend.vercel.app
+**Production URL:** https://achiever.fit
 
 ## Environment Variables
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `VITE_API_URL` | Backend API URL | `https://achiever-backend.fly.dev` |
+| `VITE_API_URL` | Backend API URL | `https://api.achiever.fit` |
 
 ## License
 
