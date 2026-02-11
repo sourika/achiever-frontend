@@ -60,7 +60,7 @@ const Home = () => {
                     style={{ backgroundImage: "url('/run_enhanced.jpg')" }}
                 />
                 {/* Dark overlay */}
-                <div className="absolute inset-0 bg-navy-950/70" />
+                <div className="absolute inset-0 bg-navy-950/50" />
 
                 {/* Sign-in card — fully opaque */}
                 <div className="max-w-md w-full relative z-10">
@@ -113,7 +113,7 @@ const Home = () => {
             {/* ── Footer ── */}
             <footer className="bg-navy-900/90 border-t border-navy-800/60 px-6 py-3 shrink-0 relative z-20">
                 <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <span className="text-navy-500 text-xs font-body">
+                    <span className="text-navy-300 text-xs font-body">
                         © {new Date().getFullYear()} Achiever. All rights reserved.
                     </span>
                     <div className="flex items-center gap-4">

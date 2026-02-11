@@ -41,7 +41,7 @@ const LoginPassword = () => {
                 style={{ backgroundImage: "url('/run_enhanced.jpg')" }}
             />
             {/* Dark overlay */}
-            <div className="absolute inset-0 bg-navy-950/70" />
+            <div className="absolute inset-0 bg-navy-950/50" />
 
             <div className="max-w-md w-full relative z-10">
                 <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
