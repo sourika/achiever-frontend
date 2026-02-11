@@ -34,8 +34,16 @@ const LoginPassword = () => {
     if (!email) return null;
 
     return (
-        <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4">
-            <div className="max-w-md w-full">
+        <div className="min-h-screen relative flex items-center justify-center p-4">
+            {/* Background photo */}
+            <div
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: "url('/run_enhanced.jpg')" }}
+            />
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-navy-950/70" />
+
+            <div className="max-w-md w-full relative z-10">
                 <div className="bg-navy-800/60 border border-navy-600/40 rounded-2xl card-glow p-8">
                     <button onClick={() => navigate('/')} className="text-navy-300 hover:text-navy-200 mb-4 text-sm font-body">
                         ← Back

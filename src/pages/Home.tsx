@@ -46,7 +46,7 @@ const Home = () => {
     return (
         <div className="min-h-screen flex flex-col">
             {/* ── Header bar ── */}
-            <header className="bg-navy-950 border-b border-navy-800/60 px-6 py-3 shrink-0">
+            <header className="bg-navy-900/90 border-b border-navy-800/60 px-6 py-3 shrink-0 relative z-20">
                 <h1 className="font-display font-bold text-2xl text-white tracking-tight">
                     <span className="text-accent">A</span>chiever
                 </h1>
@@ -57,8 +57,10 @@ const Home = () => {
                 {/* Background photo */}
                 <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{ backgroundImage: "url('/run.jpg')" }}
+                    style={{ backgroundImage: "url('/run_enhanced.jpg')" }}
                 />
+                {/* Dark overlay */}
+                <div className="absolute inset-0 bg-navy-950/70" />
 
                 {/* Sign-in card — fully opaque */}
                 <div className="max-w-md w-full relative z-10">
@@ -109,7 +111,7 @@ const Home = () => {
             </main>
 
             {/* ── Footer ── */}
-            <footer className="bg-navy-950 border-t border-navy-800/60 px-6 py-3 shrink-0">
+            <footer className="bg-navy-900/90 border-t border-navy-800/60 px-6 py-3 shrink-0 relative z-20">
                 <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
                     <span className="text-navy-500 text-xs font-body">
                         © {new Date().getFullYear()} Achiever. All rights reserved.
